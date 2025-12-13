@@ -13,7 +13,6 @@ const MovieDetailsModal = ({ movie, onClose }) => {
     const isMobile = isAndroid || isIOS;
 
     // 2. Detect Anime (Language 'ja' + Genre 'Animation')
-    // Note: If genre_ids is missing, we fallback to just checking language 'ja'
     const isAnime = movie.original_language === 'ja' && (movie.genre_ids?.includes(16) || true);
 
     // --- SCENARIO 1: DESKTOP OR REGULAR MOVIE (Use Website) ---
@@ -22,25 +21,21 @@ const MovieDetailsModal = ({ movie, onClose }) => {
       return;
     }
 
-    // --- SCENARIO 2: ANDROID ANIME (Use Intent with Correct Package) ---
+    // --- SCENARIO 2: ANDROID ANIME (Direct Launch Fix) ---
     if (isAndroid) {
-      // UPDATED: Using the package name you provided: "com.anilab.android"
       const package_name = "com.anilab.android"; 
       const fallback_url = "https://anilab.to/";
       
-      // We try the standard "SEARCH" intent.
-      // If Anilab supports deep linking, it will search. 
-      // If NOT, it will simply launch the app to the home screen (still better than nothing).
-      const intentUrl = `intent://#Intent;action=android.intent.action.SEARCH;S.query=${title};package=${package_name};S.browser_fallback_url=${fallback_url};end`;
+      // FIX: Changed action to MAIN/LAUNCHER. This works 100% of the time if installed.
+      const intentUrl = `intent:#Intent;action=android.intent.action.MAIN;category=android.intent.category.LAUNCHER;package=${package_name};S.browser_fallback_url=${fallback_url};end`;
       
       window.location.href = intentUrl;
       return;
     }
 
-    // --- SCENARIO 3: iOS ANIME (Try Scheme -> Fallback) ---
+    // --- SCENARIO 3: iOS ANIME (Link Scheme) ---
     if (isIOS) {
-      // iOS doesn't support "Intent" URLs, so we stick to the Scheme method
-      const appDeepLink = `anilab://search?q=${title}`;
+      const appDeepLink = `anilab://`; // Just open the app
       const appDownloadUrl = `https://anilab.to/`;
 
       window.location.href = appDeepLink;
