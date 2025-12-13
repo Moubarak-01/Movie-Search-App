@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import Search from './components/Search.jsx'
 import Spinner from './components/Spinner.jsx'
 import MovieCard from './components/MovieCard.jsx'
-import MovieDetailsModal from './components/MovieDetailsModal.jsx' // Import Modal
+import MovieDetailsModal from './components/MovieDetailsModal.jsx'
 import { useDebounce } from 'react-use'
 import { getTrendingMovies, updateSearchCount } from './appwrite.js'
 
@@ -24,7 +24,7 @@ const App = () => {
   const [errorMessage, setErrorMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [trendingMovies, setTrendingMovies] = useState([]);
-  const [selectedMovie, setSelectedMovie] = useState(null); // Modal State
+  const [selectedMovie, setSelectedMovie] = useState(null);
 
   useDebounce(() => setDebouncedSearchTerm(searchTerm), 500, [searchTerm])
 
@@ -64,32 +64,30 @@ const App = () => {
     }
   }
 
-  // --- TRENDING LOGIC WITH FALLBACK ---
+  // --- TRENDING LOGIC ---
   const loadTrendingMovies = async () => {
     try {
-      // 1. Try to get movies from Appwrite (Your DB)
       let movies = await getTrendingMovies();
 
-      // 2. If Appwrite is empty (no users have searched yet), fallback to TMDB API
       if (!Array.isArray(movies) || movies.length === 0) {
         const tmdbResp = await fetch(`${API_BASE_URL}/trending/movie/week?api_key=${API_KEY}`, API_OPTIONS);
         
         if (tmdbResp.ok) {
           const tmdbData = await tmdbResp.json();
-          // Map TMDB format to match our Appwrite format so the UI works
           movies = (Array.isArray(tmdbData.results) ? tmdbData.results : []).slice(0, 10).map(m => ({
             $id: m.id,
             id: m.id,
             title: m.title || m.name,
             poster_url: m.poster_path ? `https://image.tmdb.org/t/p/w500${m.poster_path}` : '',
-            // Add extra fields for the Modal
+            // VITAL: Pass all data needed for Modal logic
             overview: m.overview,
             vote_average: m.vote_average,
             release_date: m.release_date,
             original_language: m.original_language,
             poster_path: m.poster_path,
             vote_count: m.vote_count,
-            popularity: m.popularity
+            popularity: m.popularity,
+            genre_ids: m.genre_ids // <--- ADDED THIS so we can detect Anime in Trending
           }));
         }
       }
@@ -127,7 +125,7 @@ const App = () => {
               {trendingMovies.map((movie, index) => (
                 <li 
                   key={movie.$id || index} 
-                  onClick={() => setSelectedMovie(movie)} // Click to Open Modal
+                  onClick={() => setSelectedMovie(movie)} 
                   className="cursor-pointer hover:opacity-80 transition-opacity"
                 >
                   <p>{index + 1}</p>
@@ -150,14 +148,13 @@ const App = () => {
                 <MovieCard 
                   key={movie.id} 
                   movie={movie} 
-                  onClick={setSelectedMovie} // Pass Click Handler
+                  onClick={setSelectedMovie} 
                 />
               ))}
             </ul>
           )}
         </section>
 
-        {/* Modal Render Logic */}
         {selectedMovie && (
           <MovieDetailsModal 
             movie={selectedMovie} 
