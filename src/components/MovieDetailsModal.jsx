@@ -3,6 +3,42 @@ import React from 'react'
 const MovieDetailsModal = ({ movie, onClose }) => {
   if (!movie) return null;
 
+  // --- SMART WATCH LOGIC ---
+  const handleWatch = () => {
+    const title = encodeURIComponent(movie.title);
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
+    // Links provided
+    const webSearchUrl = `https://thenkiri.com/?s=${title}`; // Nkiri Search
+    const appDeepLink = `anilab://search?q=${title}`;        // Anilab App Deep Link
+    const appDownloadUrl = `https://anilab.to/`;             // Anilab Download Page
+
+    if (isMobile) {
+      // 1. Try to open the Anilab App
+      window.location.href = appDeepLink;
+
+      // 2. Set a timer: If the app doesn't open within 2 seconds, go to Download Page
+      setTimeout(() => {
+        // We check if the page is still visible. 
+        // If the App opened, the browser would be in the background (hidden).
+        if (!document.hidden) {
+          if (confirm("It looks like you don't have the Anilab app yet. Would you like to download it?")) {
+             window.location.href = appDownloadUrl;
+          }
+        }
+      }, 2000);
+    } else {
+      // Desktop: Just open the website in a new tab
+      window.open(webSearchUrl, '_blank');
+    }
+  };
+
+  // --- SECONDARY WEB OPTION (For Mobile users who prefer Web) ---
+  const handleWebFallback = () => {
+     const title = encodeURIComponent(movie.title);
+     window.open(`https://thenkiri.com/?s=${title}`, '_blank');
+  }
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm" onClick={onClose}>
       <div 
@@ -19,7 +55,7 @@ const MovieDetailsModal = ({ movie, onClose }) => {
           </svg>
         </button>
 
-        {/* Movie Poster Side - Fits full image without cropping */}
+        {/* Movie Poster Side */}
         <div className="w-full md:w-[45%] h-64 md:h-auto bg-black flex items-center justify-center p-2">
           <img 
             src={movie.poster_path ? `https://image.tmdb.org/t/p/w500/${movie.poster_path}` : '/no-movie.png'} 
@@ -28,7 +64,7 @@ const MovieDetailsModal = ({ movie, onClose }) => {
           />
         </div>
 
-        {/* Content Side - Scrollable */}
+        {/* Content Side */}
         <div className="w-full md:w-[55%] p-6 md:p-8 flex flex-col gap-4 overflow-y-auto">
           <h2 className="text-3xl font-bold text-white leading-tight">{movie.title}</h2>
           
@@ -50,6 +86,28 @@ const MovieDetailsModal = ({ movie, onClose }) => {
             </p>
           </div>
           
+          {/* --- NEW ACTION BUTTONS --- */}
+          <div className="mt-6 flex flex-col gap-3">
+             {/* Primary Smart Button */}
+             <button 
+               onClick={handleWatch}
+               className="w-full py-3 px-6 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-bold rounded-lg shadow-lg transform transition hover:scale-[1.02] flex items-center justify-center gap-2"
+             >
+               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
+                 <path fillRule="evenodd" d="M4.5 5.653c0-1.426 1.529-2.33 2.779-1.643l11.54 6.348c1.295.712 1.295 2.573 0 3.285L7.28 19.991c-1.25.687-2.779-.217-2.779-1.643V5.653z" clipRule="evenodd" />
+               </svg>
+               Watch / Download
+             </button>
+
+             {/* Secondary Web Link (Visible on Mobile mostly, but safe for all) */}
+             <button 
+                onClick={handleWebFallback}
+                className="text-gray-400 hover:text-white text-sm underline decoration-gray-600 underline-offset-4"
+             >
+                Or watch on Web (Nkiri)
+             </button>
+          </div>
+
           {/* Extra Details */}
           <div className="mt-4 pt-4 border-t border-gray-800 grid grid-cols-2 gap-4 text-xs text-gray-400">
             <div>
