@@ -22,15 +22,15 @@ const MovieDetailsModal = ({ movie, onClose }) => {
       return;
     }
 
-    // --- SCENARIO 2: ANDROID ANIME (Use Intent) ---
+    // --- SCENARIO 2: ANDROID ANIME (Use Intent with Correct Package) ---
     if (isAndroid) {
-      // This "Intent" string tells Android: 
-      // "Try to Open package 'com.anilab.app'. If not found, go to 'anilab.to'"
-      // We also send a generic "SEARCH" command with the movie title.
-      // NOTE: If Anilab doesn't support search commands, it will just open the Main Menu.
-      const package_name = "com.anilab.app"; // Common package name (Verify if possible)
+      // UPDATED: Using the package name you provided: "com.anilab.android"
+      const package_name = "com.anilab.android"; 
       const fallback_url = "https://anilab.to/";
       
+      // We try the standard "SEARCH" intent.
+      // If Anilab supports deep linking, it will search. 
+      // If NOT, it will simply launch the app to the home screen (still better than nothing).
       const intentUrl = `intent://#Intent;action=android.intent.action.SEARCH;S.query=${title};package=${package_name};S.browser_fallback_url=${fallback_url};end`;
       
       window.location.href = intentUrl;
@@ -39,16 +39,15 @@ const MovieDetailsModal = ({ movie, onClose }) => {
 
     // --- SCENARIO 3: iOS ANIME (Try Scheme -> Fallback) ---
     if (isIOS) {
+      // iOS doesn't support "Intent" URLs, so we stick to the Scheme method
       const appDeepLink = `anilab://search?q=${title}`;
       const appDownloadUrl = `https://anilab.to/`;
 
-      // iOS requires a direct user click for deep links, we can't fully automate "check if installed"
-      // We try the link, and set a fallback timer
       window.location.href = appDeepLink;
       
       setTimeout(() => {
         if (!document.hidden) {
-           if(confirm("Open Anilab Download Page?")) {
+           if(confirm("Anilab App not found. Open download page?")) {
               window.location.href = appDownloadUrl;
            }
         }
