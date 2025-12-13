@@ -6,47 +6,65 @@ const MovieDetailsModal = ({ movie, onClose }) => {
   // --- SMART TRAFFIC CONTROL LOGIC ---
   const handleWatch = () => {
     const title = encodeURIComponent(movie.title);
-    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
     
-    // DETECT ANIME: Checks if it's "Japanese" (ja) AND has Genre ID 16 (Animation)
-    // Note: If genre_ids is missing, we rely on language 'ja' as a fallback guess
+    // 1. Detect Environment
+    const isAndroid = /Android/i.test(navigator.userAgent);
+    const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+    const isMobile = isAndroid || isIOS;
+
+    // 2. Detect Anime (Language 'ja' + Genre 'Animation')
+    // Note: If genre_ids is missing, we fallback to just checking language 'ja'
     const isAnime = movie.original_language === 'ja' && (movie.genre_ids?.includes(16) || true);
 
-    // 1. DESKTOP or NON-ANIME -> Always use Website (Nkiri)
+    // --- SCENARIO 1: DESKTOP OR REGULAR MOVIE (Use Website) ---
     if (!isMobile || !isAnime) {
       window.open(`https://thenkiri.com/?s=${title}`, '_blank');
       return;
     }
 
-    // 2. MOBILE + ANIME -> Try Anilab App
-    if (isMobile && isAnime) {
+    // --- SCENARIO 2: ANDROID ANIME (Use Intent) ---
+    if (isAndroid) {
+      // This "Intent" string tells Android: 
+      // "Try to Open package 'com.anilab.app'. If not found, go to 'anilab.to'"
+      // We also send a generic "SEARCH" command with the movie title.
+      // NOTE: If Anilab doesn't support search commands, it will just open the Main Menu.
+      const package_name = "com.anilab.app"; // Common package name (Verify if possible)
+      const fallback_url = "https://anilab.to/";
+      
+      const intentUrl = `intent://#Intent;action=android.intent.action.SEARCH;S.query=${title};package=${package_name};S.browser_fallback_url=${fallback_url};end`;
+      
+      window.location.href = intentUrl;
+      return;
+    }
+
+    // --- SCENARIO 3: iOS ANIME (Try Scheme -> Fallback) ---
+    if (isIOS) {
       const appDeepLink = `anilab://search?q=${title}`;
       const appDownloadUrl = `https://anilab.to/`;
 
-      // Try to open the App
+      // iOS requires a direct user click for deep links, we can't fully automate "check if installed"
+      // We try the link, and set a fallback timer
       window.location.href = appDeepLink;
-
-      // Fallback: If app doesn't open in 2s, ask to download
+      
       setTimeout(() => {
         if (!document.hidden) {
-          if (confirm("Anilab App not found. Would you like to download it to watch this Anime?")) {
-             window.location.href = appDownloadUrl;
-          }
+           if(confirm("Open Anilab Download Page?")) {
+              window.location.href = appDownloadUrl;
+           }
         }
       }, 2000);
     }
   };
 
-  // Secondary option for Mobile Anime users who prefer the website
   const handleWebFallback = () => {
      const title = encodeURIComponent(movie.title);
      window.open(`https://thenkiri.com/?s=${title}`, '_blank');
   }
 
-  // Helper to show the correct button text
+  // Helper for UI Text
   const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-  const isAnime = movie.original_language === 'ja'; // Simple check for UI text
-  const primaryButtonText = (isMobile && isAnime) ? "Watch in App (Anilab)" : "Watch on Web (Nkiri)";
+  const isAnime = movie.original_language === 'ja';
+  const primaryButtonText = (isMobile && isAnime) ? "Open Anilab App" : "Watch on Nkiri";
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm" onClick={onClose}>
@@ -95,7 +113,6 @@ const MovieDetailsModal = ({ movie, onClose }) => {
           </div>
           
           <div className="mt-6 flex flex-col gap-3">
-             {/* Primary Smart Button */}
              <button 
                onClick={handleWatch}
                className="w-full py-3 px-6 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-bold rounded-lg shadow-lg transform transition hover:scale-[1.02] flex items-center justify-center gap-2"
@@ -106,7 +123,6 @@ const MovieDetailsModal = ({ movie, onClose }) => {
                {primaryButtonText}
              </button>
 
-             {/* Secondary Web Link (Only visible if it's Mobile Anime, to give them a choice) */}
              {isMobile && isAnime && (
                <button 
                   onClick={handleWebFallback}
