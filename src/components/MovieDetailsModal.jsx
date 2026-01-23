@@ -4,11 +4,12 @@ import { useState, useEffect } from 'react';
 const API_KEY = import.meta.env.VITE_TMDB_API_KEY;
 const API_BASE_URL = 'https://api.themoviedb.org/3';
 
-const MovieDetailsModal = ({ movie, onClose }) => {
+const MovieDetailsModal = ({ movie, onClose, isFavorite, toggleFavorite, onSelectMovie }) => {
   if (!movie) return null;
 
   const [trailerKey, setTrailerKey] = useState(null);
   const [showTrailer, setShowTrailer] = useState(false);
+  const [recommendations, setRecommendations] = useState([]);
 
   // --- ENVIRONMENT DETECTION ---
   const isAndroid = /Android/i.test(navigator.userAgent);
@@ -18,29 +19,35 @@ const MovieDetailsModal = ({ movie, onClose }) => {
   // Detect Anime (Language 'ja' + Genre 'Animation')
   const isAnime = movie.original_language === 'ja' && (movie.genre_ids?.includes(16) || true);
 
-  // --- FETCH TRAILER ---
+  // --- FETCH DATA ---
   useEffect(() => {
-    const fetchTrailer = async () => {
+    const fetchData = async () => {
       try {
-        const response = await fetch(`${API_BASE_URL}/movie/${movie.id}/videos?api_key=${API_KEY}`);
-        const data = await response.json();
+        // Fetch Trailer
+        const videoResponse = await fetch(`${API_BASE_URL}/movie/${movie.id}/videos?api_key=${API_KEY}`);
+        const videoData = await videoResponse.json();
 
-        if (data.results) {
-          const trailer = data.results.find(
+        if (videoData.results) {
+          const trailer = videoData.results.find(
             (vid) => vid.site === "YouTube" && vid.type === "Trailer"
           );
-          // Fallback to any YouTube video if "Trailer" not found
-          const anyVideo = data.results.find((vid) => vid.site === "YouTube");
+          const anyVideo = videoData.results.find((vid) => vid.site === "YouTube");
           setTrailerKey(trailer ? trailer.key : (anyVideo ? anyVideo.key : null));
         }
+
+        // Fetch Recommendations
+        const recResponse = await fetch(`${API_BASE_URL}/movie/${movie.id}/recommendations?api_key=${API_KEY}`);
+        const recData = await recResponse.json();
+        setRecommendations(recData.results || []);
+
       } catch (error) {
-        console.error("Error fetching trailer:", error);
+        console.error("Error fetching data:", error);
       }
     };
 
     if (movie?.id) {
-      fetchTrailer();
-      setShowTrailer(false); // Reset on new movie
+      fetchData();
+      setShowTrailer(false);
     }
   }, [movie]);
 
@@ -136,6 +143,7 @@ const MovieDetailsModal = ({ movie, onClose }) => {
               <button
                 onClick={onClose}
                 className="absolute top-4 right-4 z-20 p-2 text-gray-400 hover:text-white bg-black/60 rounded-full transition-colors"
+                title="Close"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-6 h-6">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -154,7 +162,29 @@ const MovieDetailsModal = ({ movie, onClose }) => {
 
               {/* Content Side */}
               <div className="w-full md:w-[55%] p-6 md:p-8 flex flex-col gap-4 overflow-y-auto">
-                <h2 className="text-3xl font-bold text-white leading-tight">{movie.title}</h2>
+                <div className="flex justify-between items-start gap-4">
+                  <h2 className="text-3xl font-bold text-white leading-tight">{movie.title}</h2>
+
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      toggleFavorite(movie);
+                    }}
+                    className="p-2 rounded-full hover:bg-white/10 transition-colors flex-shrink-0"
+                    title={isFavorite ? "Remove from Favorites" : "Add to Favorites"}
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill={isFavorite ? "red" : "none"}
+                      viewBox="0 0 24 24"
+                      strokeWidth={1.5}
+                      stroke="currentColor"
+                      className={`w-8 h-8 ${isFavorite ? "text-red-500" : "text-gray-400"}`}
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" />
+                    </svg>
+                  </button>
+                </div>
 
                 <div className="flex flex-wrap items-center gap-3 text-sm text-gray-300">
                   <div className="flex items-center gap-1 text-yellow-400 font-semibold">
@@ -242,6 +272,30 @@ const MovieDetailsModal = ({ movie, onClose }) => {
                     <span className="text-white text-sm">{movie.vote_count}</span>
                   </div>
                 </div>
+
+                {/* RECOMMENDATIONS SECTION */}
+                {recommendations.length > 0 && (
+                  <div className="mt-4 pt-4 border-t border-gray-800">
+                    <h3 className="text-white font-semibold mb-3">You might also like</h3>
+                    <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide">
+                      {recommendations.slice(0, 10).map((rec) => (
+                        <div
+                          key={rec.id}
+                          className="min-w-[120px] w-[120px] cursor-pointer hover:opacity-80 transition-opacity"
+                          onClick={() => onSelectMovie && onSelectMovie(rec)}
+                        >
+                          <img
+                            src={rec.poster_path ? `https://image.tmdb.org/t/p/w200${rec.poster_path}` : '/no-movie.png'}
+                            alt={rec.title}
+                            className="w-full h-[180px] object-cover rounded-lg mb-2"
+                            loading="lazy"
+                          />
+                          <p className="text-xs text-center text-gray-300 line-clamp-2">{rec.title}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             </>
           )}

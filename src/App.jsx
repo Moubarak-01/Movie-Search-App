@@ -8,6 +8,9 @@ import BottomNav from './components/BottomNav.jsx'
 import FilterMenu from './components/FilterMenu.jsx'
 import { useDebounce } from 'react-use'
 import { usePullToRefresh } from './hooks/usePullToRefresh.js'
+import { useFavorites } from './hooks/useFavorites.js'
+import { useWatchHistory } from './hooks/useWatchHistory.js'
+
 import { getTrendingMovies, updateSearchCount } from './appwrite.js'
 
 const API_BASE_URL = 'https://api.themoviedb.org/3';
@@ -22,6 +25,7 @@ const API_OPTIONS = {
 }
 
 const App = () => {
+
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('')
   const [searchTerm, setSearchTerm] = useState('');
   const [movieList, setMovieList] = useState([]);
@@ -33,17 +37,38 @@ const App = () => {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [filters, setFilters] = useState({ genres: [], minRating: 0 });
 
+  // Custom Hooks
+  const { favorites, addFavorite, removeFavorite, isFavorite } = useFavorites();
+  const { history, addToHistory } = useWatchHistory();
+
   useDebounce(() => setDebouncedSearchTerm(searchTerm), 500, [searchTerm])
 
   // Handle Scroll to Section
   const handleTabChange = (tabId) => {
     setActiveTab(tabId);
+    if (tabId === 'favorites') {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
     const element = document.getElementById(tabId);
     if (element) {
       element.scrollIntoView({ behavior: 'smooth' });
     } else if (tabId === 'home') {
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
+  };
+
+  const toggleFavorite = (movie) => {
+    if (isFavorite(movie.id)) {
+      removeFavorite(movie.id);
+    } else {
+      addFavorite(movie);
+    }
+  };
+
+  const handleMovieClick = (movie) => {
+    setSelectedMovie(movie);
+    addToHistory(movie);
   };
 
   const fetchMovies = async (query = '') => {
@@ -155,7 +180,22 @@ const App = () => {
 
       <div className="pattern" />
       <div className="wrapper">
-        <header>
+        <header className="relative">
+          <nav className="absolute top-0 right-0 z-50 hidden md:flex items-center gap-6 p-4">
+            <button
+              onClick={() => handleTabChange('home')}
+              className={`text-lg font-medium transition-colors ${activeTab === 'home' || activeTab === 'trending' ? 'text-white border-b-2 border-white' : 'text-gray-400 hover:text-white'}`}
+            >
+              Home
+            </button>
+            <button
+              onClick={() => handleTabChange('favorites')}
+              className={`text-lg font-medium transition-colors ${activeTab === 'favorites' ? 'text-white border-b-2 border-white' : 'text-gray-400 hover:text-white'}`}
+            >
+              Favorites
+            </button>
+          </nav>
+
           <img src="/logo.png" alt="Logo" className="size-20 mt-0.5" />
           <img src="/hero.png" alt="Hero Banner" className="size-auto" />
           <h1>Find <span className="text-gradient">Movies</span> You will Enjoy Without too much Hassle</h1>
@@ -164,16 +204,12 @@ const App = () => {
           </section>
         </header>
 
-        {trendingMovies.length > 0 && (
+        {activeTab === 'home' && trendingMovies.length > 0 && (
           <section className="trending" id="trending">
             <h2>Trending Movies</h2>
             <ul>
               {trendingMovies.map((movie, index) => (
-                <li
-                  key={movie.$id || index}
-                  onClick={() => setSelectedMovie(movie)}
-                  className="cursor-pointer hover:opacity-80 transition-opacity"
-                >
+                <li key={movie.$id || index} onClick={() => handleMovieClick(movie)} className="cursor-pointer hover:opacity-80 transition-opacity">
                   <p>{index + 1}</p>
                   <img src={movie.poster_url} alt={movie.title} />
                 </li>
@@ -182,9 +218,15 @@ const App = () => {
           </section>
         )}
 
-        <section className="all-movies mt-6">
-          <h2>All Movies</h2>
-          {isLoading ? (
+        <section className="all-movies mt-6" id="all-movies">
+          <h2>{activeTab === 'favorites' ? 'Your Favorites' : 'All Movies'}</h2>
+
+          {activeTab === 'favorites' && favorites.length === 0 ? (
+            <div className="text-center text-gray-400 py-10">
+              <p className="text-lg">No favorite movies yet.</p>
+              <p className="text-sm">Heart some movies to see them here!</p>
+            </div>
+          ) : isLoading ? (
             <ul className="grid grid-cols-1 gap-5 xs:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
               {Array.from({ length: 8 }).map((_, i) => (
                 <li key={i}>
@@ -196,8 +238,11 @@ const App = () => {
             <p className="text-red-500">{errorMessage}</p>
           ) : (
             <ul>
-              {movieList
+              {(activeTab === 'favorites' ? favorites : movieList)
                 .filter(movie => {
+                  // Filter logic apply only for Home tab or if reusing filters for favs (optional, usually favs show all)
+                  if (activeTab === 'favorites') return true;
+
                   // Filter by Genre
                   if (filters.genres.length > 0) {
                     const movieGenres = movie.genre_ids || [];
@@ -214,7 +259,9 @@ const App = () => {
                   <MovieCard
                     key={movie.id}
                     movie={movie}
-                    onClick={setSelectedMovie}
+                    onClick={handleMovieClick}
+                    isFavorite={isFavorite(movie.id)}
+                    toggleFavorite={toggleFavorite}
                   />
                 ))}
             </ul>
@@ -225,6 +272,9 @@ const App = () => {
           <MovieDetailsModal
             movie={selectedMovie}
             onClose={() => setSelectedMovie(null)}
+            onSelectMovie={setSelectedMovie} // Pass this prop
+            isFavorite={isFavorite(selectedMovie.id)}
+            toggleFavorite={toggleFavorite}
           />
         )}
       </div>

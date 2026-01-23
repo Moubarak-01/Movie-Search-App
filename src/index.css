@@ -38,7 +38,7 @@
   body {
     font-family: "DM Sans", serif;
     font-optical-sizing: auto;
-    background: #030014;
+    @apply bg-[#030014] text-white;
   }
 
   h1 {
