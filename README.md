@@ -44,38 +44,49 @@ A responsive React app that allows users to search for movies, view details via 
 
 ---
 
-## 🤸 Quick Start (Run Locally)
-
-> ⚠️ **Important:** You must have proper API keys for the app to work locally. Follow the steps below carefully.
+## 📦 Installation & Setup
 
 ### Prerequisites
+- Node.js v18 or higher
+- npm or yarn
 
-- [Node.js](https://nodejs.org/en/)  
-- [npm](https://www.npmjs.com/)  
-- [Git](https://git-scm.com/)  
-- **TMDB API Key:** Register at [The Movie Database (TMDB)](https://www.themoviedb.org/documentation/api) to get your API key.  
-- **Appwrite Project:** Set up a free Appwrite project at [https://appwrite.io](https://appwrite.io) and create a database + collection.
-
-### Steps
-
-1. Clone the repository:
-
+### 1. Clone the Repository
 ```bash
-git clone [https://github.com/Moubarak-01/Movie-Search-App-](https://github.com/Moubarak-01/Movie-Search-App-)  
-Install dependencies:
+git clone https://github.com/Moubarak-01/Movie-Search-App-.git
+cd Movie-Search-App-
+```
 
-Bash
-
+### 2. Install Dependencies
+```bash
 npm install
-Set up environment variables:
+```
 
-Create a .env or .env.local file in the root directory and add:
+### Required API Keys
 
-Code snippet
+```
+TMDB_API_KEY
+```
+[Get Key](https://www.themoviedb.org/documentation/api)
 
+```
+APPWRITE_PROJECT_ID
+APPWRITE_DATABASE_ID
+APPWRITE_COLLECTION_ID
+APPWRITE_ENDPOINT
+```
+[Get Keys](https://appwrite.io)
+
+Create a `.env` or `.env.local` file in the root directory and paste the following:
+
+```env
 VITE_TMDB_API_KEY=your_tmdb_api_key  
 VITE_APPWRITE_PROJECT_ID=your_appwrite_project_id  
 VITE_APPWRITE_DATABASE_ID=your_appwrite_database_id  
 VITE_APPWRITE_COLLECTION_ID=your_appwrite_collection_id  
 VITE_APPWRITE_ENDPOINT=your_appwrite_endpoint
-⚠️ Make sure you replace all placeholders with your actual API keys. The app won't work without them.
+```
+
+### 5. Start the Application
+```bash
+npm run dev
+```
