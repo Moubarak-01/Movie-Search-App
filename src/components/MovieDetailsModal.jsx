@@ -47,9 +47,9 @@ const MovieDetailsModal = ({ movie, onClose }) => {
   const primaryButtonText = "Watch on Nkiri";
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm" onClick={onClose}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm md:items-center items-end md:p-4 p-0" onClick={onClose}>
       <div
-        className="relative w-full max-w-4xl bg-[#1a1a1a] border border-gray-700 rounded-2xl shadow-2xl overflow-hidden flex flex-col md:flex-row max-h-[90vh]"
+        className="relative w-full max-w-4xl bg-[#1a1a1a] border border-gray-700 rounded-2xl md:rounded-2xl rounded-t-2xl rounded-b-none shadow-2xl overflow-hidden flex flex-col md:flex-row max-h-[90vh] md:max-h-[90vh] max-h-[95vh]"
         onClick={(e) => e.stopPropagation()}
       >
         <button
@@ -67,6 +67,7 @@ const MovieDetailsModal = ({ movie, onClose }) => {
             src={movie.poster_path ? `https://image.tmdb.org/t/p/w500/${movie.poster_path}` : '/no-movie.png'}
             alt={movie.title}
             className="max-h-full w-auto object-contain shadow-lg rounded-lg"
+            loading="lazy"
           />
         </div>
 

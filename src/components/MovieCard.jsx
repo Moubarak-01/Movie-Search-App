@@ -2,13 +2,14 @@ import React from 'react'
 
 const MovieCard = ({ movie, onClick }) => {
   return (
-    <div 
+    <div
       className="movie-card cursor-pointer hover:scale-[1.02] transition-transform duration-200"
       onClick={() => onClick(movie)}
     >
-      <img 
+      <img
         src={movie.poster_path ? `https://image.tmdb.org/t/p/w500/${movie.poster_path}` : '/no-movie.png'}
         alt={movie.title}
+        loading="lazy"
       />
 
       <div className="mt-4">
