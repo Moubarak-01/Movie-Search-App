@@ -3,7 +3,11 @@ import Search from './components/Search.jsx'
 import Spinner from './components/Spinner.jsx'
 import MovieCard from './components/MovieCard.jsx'
 import MovieDetailsModal from './components/MovieDetailsModal.jsx'
+import MovieCardSkeleton from './components/MovieCardSkeleton.jsx'
+import BottomNav from './components/BottomNav.jsx'
+import FilterMenu from './components/FilterMenu.jsx'
 import { useDebounce } from 'react-use'
+import { usePullToRefresh } from './hooks/usePullToRefresh.js'
 import { getTrendingMovies, updateSearchCount } from './appwrite.js'
 
 const API_BASE_URL = 'https://api.themoviedb.org/3';
@@ -25,8 +29,22 @@ const App = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [trendingMovies, setTrendingMovies] = useState([]);
   const [selectedMovie, setSelectedMovie] = useState(null);
+  const [activeTab, setActiveTab] = useState('home');
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [filters, setFilters] = useState({ genres: [], minRating: 0 });
 
   useDebounce(() => setDebouncedSearchTerm(searchTerm), 500, [searchTerm])
+
+  // Handle Scroll to Section
+  const handleTabChange = (tabId) => {
+    setActiveTab(tabId);
+    const element = document.getElementById(tabId);
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth' });
+    } else if (tabId === 'home') {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
 
   const fetchMovies = async (query = '') => {
     setIsLoading(true);
@@ -71,7 +89,7 @@ const App = () => {
 
       if (!Array.isArray(movies) || movies.length === 0) {
         const tmdbResp = await fetch(`${API_BASE_URL}/trending/movie/week?api_key=${API_KEY}`, API_OPTIONS);
-        
+
         if (tmdbResp.ok) {
           const tmdbData = await tmdbResp.json();
           movies = (Array.isArray(tmdbData.results) ? tmdbData.results : []).slice(0, 10).map(m => ({
@@ -107,25 +125,53 @@ const App = () => {
     loadTrendingMovies();
   }, []);
 
+  // --- PULL TO REFRESH ---
+  const handleRefresh = async () => {
+    await Promise.all([
+      fetchMovies(debouncedSearchTerm),
+      loadTrendingMovies()
+    ]);
+  };
+
+  const { isRefreshing, pullChange } = usePullToRefresh(handleRefresh);
+
   return (
     <main>
-      <div className="pattern"/>
+      {/* Pull to Refresh Indicator */}
+      <div
+        className="fixed top-0 left-0 right-0 z-50 flex justify-center pointer-events-none transition-transform duration-75"
+        style={{ transform: `translateY(${pullChange > 0 ? pullChange - 40 : -100}px)` }}
+      >
+        <div className="bg-white/10 backdrop-blur-md rounded-full p-2 shadow-lg border border-white/20 mt-safe-top">
+          {isRefreshing ? (
+            <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+          ) : (
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-6 h-6 text-white transition-transform duration-200" style={{ transform: `rotate(${pullChange * 2}deg)` }}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+            </svg>
+          )}
+        </div>
+      </div>
+
+      <div className="pattern" />
       <div className="wrapper">
         <header>
           <img src="/logo.png" alt="Logo" className="size-20 mt-0.5" />
           <img src="/hero.png" alt="Hero Banner" className="size-auto" />
           <h1>Find <span className="text-gradient">Movies</span> You will Enjoy Without too much Hassle</h1>
-          <Search searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
+          <section id="search">
+            <Search searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
+          </section>
         </header>
 
         {trendingMovies.length > 0 && (
-          <section className="trending">
+          <section className="trending" id="trending">
             <h2>Trending Movies</h2>
             <ul>
               {trendingMovies.map((movie, index) => (
-                <li 
-                  key={movie.$id || index} 
-                  onClick={() => setSelectedMovie(movie)} 
+                <li
+                  key={movie.$id || index}
+                  onClick={() => setSelectedMovie(movie)}
                   className="cursor-pointer hover:opacity-80 transition-opacity"
                 >
                   <p>{index + 1}</p>
@@ -139,29 +185,63 @@ const App = () => {
         <section className="all-movies mt-6">
           <h2>All Movies</h2>
           {isLoading ? (
-            <Spinner />
+            <ul className="grid grid-cols-1 gap-5 xs:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+              {Array.from({ length: 8 }).map((_, i) => (
+                <li key={i}>
+                  <MovieCardSkeleton />
+                </li>
+              ))}
+            </ul>
           ) : errorMessage ? (
             <p className="text-red-500">{errorMessage}</p>
           ) : (
             <ul>
-              {movieList.map((movie) => (
-                <MovieCard 
-                  key={movie.id} 
-                  movie={movie} 
-                  onClick={setSelectedMovie} 
-                />
-              ))}
+              {movieList
+                .filter(movie => {
+                  // Filter by Genre
+                  if (filters.genres.length > 0) {
+                    const movieGenres = movie.genre_ids || [];
+                    const matchesGenre = filters.genres.some(id => movieGenres.includes(id));
+                    if (!matchesGenre) return false;
+                  }
+                  // Filter by Rating
+                  if (filters.minRating > 0) {
+                    if ((movie.vote_average || 0) < filters.minRating) return false;
+                  }
+                  return true;
+                })
+                .map((movie) => (
+                  <MovieCard
+                    key={movie.id}
+                    movie={movie}
+                    onClick={setSelectedMovie}
+                  />
+                ))}
             </ul>
           )}
         </section>
 
         {selectedMovie && (
-          <MovieDetailsModal 
-            movie={selectedMovie} 
-            onClose={() => setSelectedMovie(null)} 
+          <MovieDetailsModal
+            movie={selectedMovie}
+            onClose={() => setSelectedMovie(null)}
           />
         )}
       </div>
+
+
+      <FilterMenu
+        isOpen={isFilterOpen}
+        onClose={() => setIsFilterOpen(false)}
+        onApplyFilters={setFilters}
+      />
+
+      {/* Mobile Bottom Navigation */}
+      <BottomNav
+        activeTab={activeTab}
+        onTabChange={handleTabChange}
+        onFilterClick={() => setIsFilterOpen(true)}
+      />
     </main>
   )
 }

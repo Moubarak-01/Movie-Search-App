@@ -97,6 +97,32 @@ The app detects content type (Anime vs. Regular Movies) and device (Desktop vs. 
 
 ---
 
+## 📱 Mobile Optimizations
+
+The app has been specifically optimized for a smooth, professional mobile experience that rivals native apps:
+
+### Layout & Touch Targets
+- **2-Column Grid**: Perfect balance of density and usability on mobile screens
+- **Larger Touch Targets**: Minimum 48px height for all interactive elements
+- **Optimized Spacing**: 20px gaps between cards to prevent mis-taps
+- **No Horizontal Scroll**: Locked horizontal axis with `overflow-x: hidden`
+
+### UI Enhancements
+- **Bottom Sheet Modal**: Slides up from bottom (native Android/iOS pattern)
+- **Larger Search Bar**: 52px height with iOS-optimized 17px font size (prevents zoom on focus)
+- **Centered Hero**: Perfectly aligned hero images at 90% width
+- **Bigger Card Text**: 18px titles for better readability
+
+### Performance
+- **Lazy Loading Images**: Only loads posters when scrolling into viewport
+- **Optimized Image Sizes**: TMDB's w500 variant + lazy loading = faster loads
+- **Debounced Search**: 500ms delay reduces unnecessary API calls
+
+### Desktop Preservation
+All mobile optimizations use responsive breakpoints (`@media max-width: 768px`) - **desktop experience remains unchanged**.
+
+---
+
 ## 🏗️ Architecture
 
 ### Component Structure

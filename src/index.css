@@ -21,6 +21,20 @@
 }
 
 @layer base {
+
+  /* Mobile Layout Lock - Prevents sideways wobble */
+  html,
+  body {
+    max-width: 100%;
+    overflow-x: hidden;
+    position: relative;
+  }
+
+  /* Ensure all elements calculate width correctly */
+  * {
+    box-sizing: border-box;
+  }
+
   body {
     font-family: "DM Sans", serif;
     font-optical-sizing: auto;
@@ -41,10 +55,23 @@
 
   header {
     @apply sm:mt-10 mt-5;
+
+    /* Mobile: Center hero images perfectly */
+    @media (max-width: 768px) {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 0 1rem;
+    }
   }
 
   header img {
     @apply w-full max-w-lg h-auto object-contain mx-auto drop-shadow-md;
+
+    /* Mobile: Scale down slightly to prevent edge touching */
+    @media (max-width: 768px) {
+      max-width: 90%;
+    }
   }
 }
 
