@@ -35,7 +35,8 @@ A responsive React app that allows users to search for movies, view details via 
 - **Smart Movie Modal:** Click any card to view full details, ratings, and plot overview.
 - **Intelligent Traffic Control:** Automatically routes users to the best viewing source based on their device:
   - **Desktop:** Redirects to **Nkiri** (Web).
-  - **Mobile (Anime):** Uses **Deep Linking** to launch the **Anilab App** directly.
+  - **Anime (All Devices):** Offers a choice between **HiAnime** and **Nkiri**.
+  - **Mobile (Anime):** Adds an option to launch the **Anilab App** directly via Deep Linking.
   - **Mobile (Movies):** Fallback to web for standard content.
 - **App Integration:** Supports Android Intent handling to detect if external apps are installed.
 - **Trending Movies:** Real-time trending list powered by Appwrite database.
