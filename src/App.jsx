@@ -180,29 +180,32 @@ const App = () => {
 
       <div className="pattern" />
       <div className="wrapper">
-        <header className="relative">
-          <nav className="absolute top-0 right-0 z-50 hidden md:flex items-center gap-6 p-4">
-            <button
-              onClick={() => handleTabChange('home')}
-              className={`text-lg font-medium transition-colors ${activeTab === 'home' || activeTab === 'trending' ? 'text-white border-b-2 border-white' : 'text-gray-400 hover:text-white'}`}
-            >
-              Home
-            </button>
-            <button
-              onClick={() => handleTabChange('favorites')}
-              className={`text-lg font-medium transition-colors ${activeTab === 'favorites' ? 'text-white border-b-2 border-white' : 'text-gray-400 hover:text-white'}`}
-            >
-              Favorites
-            </button>
-          </nav>
-
-          <img src="/logo.png" alt="Logo" className="size-20 mt-0.5" />
-          <img src="/hero.png" alt="Hero Banner" className="size-auto" />
+          <header className="w-full flex justify-between items-center px-8 py-4 z-50">
+            <div className="flex items-center gap-3">
+              <img src="/mouvie-logo-removebg-preview.png" alt="Mouvie Logo" className="h-56 w-auto object-contain" />
+            </div>
+            <nav className="hidden md:flex items-center gap-6">
+              <button
+                onClick={() => handleTabChange('home')}
+                className={`text-lg font-medium transition-colors ${activeTab === 'home' || activeTab === 'trending' ? 'text-white border-b-2 border-white' : 'text-gray-400 hover:text-white'}`}
+              >
+                Home
+              </button>
+              <button
+                onClick={() => handleTabChange('favorites')}
+                className={`text-lg font-medium transition-colors ${activeTab === 'favorites' ? 'text-white border-b-2 border-white' : 'text-gray-400 hover:text-white'}`}
+              >
+                Favorites
+              </button>
+            </nav>
+          </header>
+          <div className="flex justify-center mx-auto my-6" style={{ maxWidth: '1700px' }}>
+            <img src="/hero.png" alt="Hero Banner" className="w-full h-auto object-contain block" />
+          </div>
           <h1>Find <span className="text-gradient">Movies</span> You will Enjoy Without too much Hassle</h1>
           <section id="search">
             <Search searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
           </section>
-        </header>
 
         {activeTab === 'home' && trendingMovies.length > 0 && (
           <section className="trending" id="trending">

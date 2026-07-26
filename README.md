@@ -1,4 +1,7 @@
-# 🎬 Movie Search App
+<div align="center">
+  <img src="public/mouvie-logo-removebg-preview.png" alt="Mouvie Logo" width="120"/>
+  <h1>🎬 Mouvie</h1>
+</div>
 
 <div align="center">
   <img src="https://img.shields.io/badge/-React_JS-black?style=for-the-badge&logoColor=white&logo=react&color=61DAFB" alt="React.js" />
@@ -8,17 +11,19 @@
 
 <br/>
 
+**Live App:** [https://movie-search-mu-three.vercel.app/](https://movie-search-mu-three.vercel.app/)
+
 A modern, premium movie discovery platform that bridges the gap between searching for content and actually watching it. Built with React 19, Tailwind v4, and powered by TMDB API and Appwrite, this application provides intelligent routing to multiple streaming sources, robust personalization, and a visually stunning "Space Dark" aesthetic.
 
 ---
 
 ## 📖 Overview
 
-The Movie Search App solves a common problem: finding where to watch your favorite movies and anime without the hassle. It combines a beautiful, responsive interface with smart features like personalized favorites, watch history, and AI-driven recommendations.
+Mouvie solves a common problem: finding where to watch your favorite movies and anime without the hassle. It combines a beautiful, responsive interface with smart features like personalized favorites, watch history, and AI-driven recommendations.
 
 ### Key Highlights
 
-🎯 **Smart Streaming Selection** - Auto-detects Anime vs. Movies and routes to the best source (HiAnime, Nkiri).  
+🎯 **Smart Streaming Selection** - Auto-detects Anime vs. Movies and routes to the best source (AnimeSuge, Nkiri).  
 ❤️ **Personalization** - "Favorites" and "Watch History" that persist across sessions.  
 🧠 **Smart Recommendations** - "You might also like" suggestions for every movie.  
 📱 **Universal Design** - Flawless experience on both Mobile (Bottom Nav) and Desktop (Top Nav).  
@@ -30,9 +35,9 @@ The Movie Search App solves a common problem: finding where to watch your favori
 ## 📸 Screenshots
 
 <div align="center">
-  <img src="preview 1.png" alt="Movie Search App Screenshot 1" width="300"/>  
-  <img src="preview 2.png" alt="Movie Search App Screenshot 2" width="300"/>  
-  <img src="preview 3.png" alt="Movie Search App Screenshot 3" width="300"/>  
+  <img src="preview 1.png" alt="Mouvie Screenshot 1" width="300"/>  
+  <img src="preview 2.png" alt="Mouvie Screenshot 2" width="300"/>  
+  <img src="preview 3.png" alt="Mouvie Screenshot 3" width="300"/>  
 </div>
 
 ---
@@ -65,7 +70,7 @@ The Movie Search App solves a common problem: finding where to watch your favori
 
 ### 🎭 Smart Movie Modal
 Click any movie to reveal a feature-rich modal:
-- **Streaming Options**: Direct links to **HiAnime** (for anime) or **Nkiri** (for movies).
+- **Streaming Options**: Direct links to **AnimeSuge** (for anime) or **Nkiri** (for movies).
 - **Trailers**: Embedded YouTube trailer player.
 - **Recommendations**: A horizontal carousel of similar movies.
 - **Actions**: Add to Favorites, view full plot, see popularity stats.
@@ -93,7 +98,10 @@ npm install
 ```
 
 ### 2. Configure Environment
-Create a `.env` file in the root directory:
+Create a `.env` file in the root directory. You will need API keys from:
+- [TMDB (The Movie Database)](https://developer.themoviedb.org/docs/getting-started)
+- [Appwrite](https://appwrite.io/)
+
 ```env
 VITE_TMDB_API_KEY=your_tmdb_api_key_here
 VITE_APPWRITE_PROJECT_ID=your_project_id
@@ -153,7 +161,7 @@ Distributed under the MIT License. See `LICENSE` for more information.
 
 **Moubarak**  
 - GitHub: [@Moubarak-01](https://github.com/Moubarak-01)  
-- Project Link: [Movie Search App](https://github.com/Moubarak-01/Movie-Search-App)
+- Project Link: [Mouvie](https://github.com/Moubarak-01/Movie-Search-App)
 
 ---
 
@@ -161,4 +169,4 @@ Distributed under the MIT License. See `LICENSE` for more information.
 
 - **TMDB API** for the incredible movie database.
 - **Appwrite** for the seamless backend integration.
-- **HiAnime & Nkiri** for streaming capabilities.
+- **AnimeSuge & Nkiri** for streaming capabilities.

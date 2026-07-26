@@ -58,9 +58,9 @@ const MovieDetailsModal = ({ movie, onClose, isFavorite, toggleFavorite, onSelec
     window.open(`https://thenkiri.com/?s=${title}`, '_blank');
   };
 
-  const handleHiAnime = () => {
+  const handleAnimeSuge = () => {
     const title = encodeURIComponent(movie.title);
-    window.open(`https://hianime.to/search?keyword=${title}`, '_blank');
+    window.open(`https://animesuge.cz/filter?keyword=${title}`, '_blank');
   };
 
   const handleAnilab = () => {
@@ -222,12 +222,12 @@ const MovieDetailsModal = ({ movie, onClose, isFavorite, toggleFavorite, onSelec
                     <div className="flex flex-col gap-3">
                       <p className="text-gray-300 text-sm font-medium mb-1">Select Streaming Source:</p>
 
-                      {/* HiAnime */}
+                      {/* AnimeSuge */}
                       <button
-                        onClick={handleHiAnime}
-                        className="w-full py-3 px-6 bg-gradient-to-r from-pink-600 to-rose-600 hover:from-pink-700 hover:to-rose-700 text-white font-bold rounded-lg shadow-lg transform transition hover:scale-[1.02] flex items-center justify-center gap-2"
+                        onClick={handleAnimeSuge}
+                        className="w-full py-3 px-6 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-bold rounded-lg shadow-lg transform transition hover:scale-[1.02] flex items-center justify-center gap-2"
                       >
-                        Watch on HiAnime
+                        Watch on AnimeSuge
                       </button>
 
                       {/* Nkiri */}
