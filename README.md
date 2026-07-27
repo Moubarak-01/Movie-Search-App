@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="public/mouvie-logo-removebg-preview.png" alt="Mouvie Logo" width="150"/>
+  <img src="public/mouvie-logo-removebg-preview.png" alt="Mouvie Logo" width="320"/>
 </div>
 
 <div align="center">
