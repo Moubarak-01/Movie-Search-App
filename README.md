@@ -1,6 +1,5 @@
 <div align="center">
-  <img src="public/mouvie-logo-removebg-preview.png" alt="Mouvie Logo" width="120"/>
-  <h1>🎬 Mouvie</h1>
+  <img src="public/mouvie-logo-removebg-preview.png" alt="Mouvie Logo" width="150"/>
 </div>
 
 <div align="center">
