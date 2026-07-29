@@ -8,41 +8,54 @@ const MovieCard = ({ movie, onClick, isFavorite, toggleFavorite, index = 0 }) =>
   const cardRef = useRef(null);
   const [hoverStyle, setHoverStyle] = useState({ transformOrigin: 'center center', left: '-10%', top: '-10%' });
 
+  const updateHoverPosition = () => {
+    if (cardRef.current) {
+      const rect = cardRef.current.getBoundingClientRect();
+      let originX = 'center';
+      let originY = 'center';
+      let left = '-10%';
+      let top = '-10%';
+
+      // Adjust X axis if too close to edges
+      if (rect.left < 50) { originX = 'left'; left = '0%'; }
+      else if (window.innerWidth - rect.right < 50) { originX = 'right'; left = '-20%'; }
+
+      // Adjust Y axis if too close to edges
+      if (rect.top < 100) { 
+        originY = 'top'; 
+        top = rect.top < 20 ? `${20 - rect.top}px` : '0%'; 
+      }
+      else if (window.innerHeight - rect.bottom < 100) { 
+        originY = 'bottom'; 
+        top = '-20%'; 
+        const bottomDist = window.innerHeight - rect.bottom;
+        if (bottomDist < 20) {
+           top = `calc(-20% - ${20 - bottomDist}px)`;
+        }
+      }
+
+      setHoverStyle({ transformOrigin: `${originX} ${originY}`, left, top });
+    }
+  };
+
   const handleMouseEnter = () => {
     // Only show hover card on desktop (prevent sticky hover on mobile)
     if (window.innerWidth > 768) {
       hoverTimeoutRef.current = setTimeout(() => {
-        if (cardRef.current) {
-          const rect = cardRef.current.getBoundingClientRect();
-          let originX = 'center';
-          let originY = 'center';
-          let left = '-10%';
-          let top = '-10%';
-
-          // Adjust X axis if too close to edges
-          if (rect.left < 50) { originX = 'left'; left = '0%'; }
-          else if (window.innerWidth - rect.right < 50) { originX = 'right'; left = '-20%'; }
-
-          // Adjust Y axis if too close to edges
-          if (rect.top < 100) { 
-            originY = 'top'; 
-            top = rect.top < 20 ? `${20 - rect.top}px` : '0%'; 
-          }
-          else if (window.innerHeight - rect.bottom < 100) { 
-            originY = 'bottom'; 
-            top = '-20%'; 
-            const bottomDist = window.innerHeight - rect.bottom;
-            if (bottomDist < 20) {
-               top = `calc(-20% - ${20 - bottomDist}px)`;
-            }
-          }
-
-          setHoverStyle({ transformOrigin: `${originX} ${originY}`, left, top });
-        }
+        updateHoverPosition();
         setIsHovered(true);
-      }, 1300); // 2000ms delay
+      }, 1300); // delay
     }
   };
+
+  useEffect(() => {
+    if (isHovered) {
+      window.addEventListener('scroll', updateHoverPosition, { passive: true });
+      return () => {
+        window.removeEventListener('scroll', updateHoverPosition);
+      };
+    }
+  }, [isHovered]);
 
   const handleMouseLeave = () => {
     if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current);
