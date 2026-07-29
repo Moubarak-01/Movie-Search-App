@@ -8,6 +8,7 @@ const MovieDetailsModal = ({ movie, onClose, isFavorite, toggleFavorite, onSelec
   if (!movie) return null;
 
   const [trailerKey, setTrailerKey] = useState(null);
+  const [fallbackTrailerUrl, setFallbackTrailerUrl] = useState(null);
   const [showTrailer, setShowTrailer] = useState(false);
   const [recommendations, setRecommendations] = useState([]);
 
@@ -16,41 +17,171 @@ const MovieDetailsModal = ({ movie, onClose, isFavorite, toggleFavorite, onSelec
   const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
   const isMobile = isAndroid || isIOS;
 
-  // Detect Anime (Language 'ja' + Genre 'Animation')
-  const isAnime = movie.original_language === 'ja' && (movie.genre_ids?.includes(16) || true);
+  const isAnime = movie.original_language === 'ja' && (movie.genre_ids?.includes(16) || movie.genre_ids?.includes(10759));
+
+  const [isLoading, setIsLoading] = useState(true);
+  const [isReleased, setIsReleased] = useState(true);
+  const [releaseDateStr, setReleaseDateStr] = useState(null);
+  
+  const [tvStatus, setTvStatus] = useState(null);
+  const [nextEpisode, setNextEpisode] = useState(null);
+  const [nextEpisodeAirstamp, setNextEpisodeAirstamp] = useState(null);
+  const [timeLeft, setTimeLeft] = useState(null);
+  const [showCountdown, setShowCountdown] = useState(false);
+  const [isFetchingCountdown, setIsFetchingCountdown] = useState(false);
+
+  const mediaType = movie.media_type || (movie.name && movie.first_air_date ? 'tv' : 'movie');
 
   // --- FETCH DATA ---
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // Fetch Trailer
-        const videoResponse = await fetch(`${API_BASE_URL}/movie/${movie.id}/videos?api_key=${API_KEY}`);
+        // Fetch Details for exact release status and TV tracking
+        const detailsResponse = await fetch(`${API_BASE_URL}/${mediaType}/${movie.id}?api_key=${API_KEY}`);
+        if (detailsResponse.ok) {
+          const detailsData = await detailsResponse.json();
+          let released = true;
+          const dateStr = detailsData.release_date || detailsData.first_air_date || movie.release_date || movie.first_air_date;
+          setReleaseDateStr(dateStr);
+          
+          if (dateStr) {
+            const releaseDate = new Date(dateStr);
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            
+            if (releaseDate > today) {
+              released = false;
+            }
+          }
+
+          if (detailsData.status) {
+            const unreleasedStatuses = ['Rumored', 'Planned', 'In Production', 'Post Production'];
+            if (unreleasedStatuses.includes(detailsData.status)) {
+              released = false;
+            }
+          }
+          
+          setIsReleased(released);
+
+          if (mediaType === 'tv') {
+            setTvStatus(detailsData.status);
+            setNextEpisode(detailsData.next_episode_to_air);
+          }
+        }
+
+        // Fetch Trailer (Include Japanese, Korean, Chinese, and fallback to any)
+        const videoResponse = await fetch(`${API_BASE_URL}/${mediaType}/${movie.id}/videos?api_key=${API_KEY}&include_video_language=en,ja,ko,zh,null`);
         const videoData = await videoResponse.json();
 
-        if (videoData.results) {
+        const fallbackUrl = `https://www.youtube.com/results?search_query=${encodeURIComponent((movie.title || movie.name) + ' trailer')}`;
+        setFallbackTrailerUrl(fallbackUrl);
+
+        if (videoData.results && videoData.results.length > 0) {
           const trailer = videoData.results.find(
             (vid) => vid.site === "YouTube" && vid.type === "Trailer"
           );
           const anyVideo = videoData.results.find((vid) => vid.site === "YouTube");
-          setTrailerKey(trailer ? trailer.key : (anyVideo ? anyVideo.key : null));
+          const key = trailer ? trailer.key : (anyVideo ? anyVideo.key : null);
+          setTrailerKey(key);
+        } else {
+          setTrailerKey(null);
         }
 
         // Fetch Recommendations
-        const recResponse = await fetch(`${API_BASE_URL}/movie/${movie.id}/recommendations?api_key=${API_KEY}`);
+        const recResponse = await fetch(`${API_BASE_URL}/${mediaType}/${movie.id}/recommendations?api_key=${API_KEY}`);
         const recData = await recResponse.json();
         setRecommendations(recData.results || []);
 
       } catch (error) {
         console.error("Error fetching data:", error);
+      } finally {
+        setIsLoading(false);
       }
     };
 
     if (movie?.id) {
+      setIsLoading(true);
       fetchData();
       setShowTrailer(false);
     }
   }, [movie]);
 
+  // --- COUNTDOWN TIMER EFFECT ---
+  useEffect(() => {
+    if (!nextEpisodeAirstamp) {
+      setTimeLeft(null);
+      return;
+    }
+
+    const interval = setInterval(() => {
+      const now = new Date();
+      const airDate = new Date(nextEpisodeAirstamp);
+      const diffMs = airDate - now;
+
+      if (diffMs <= 0) {
+        setTimeLeft('Airing now or recently aired');
+        clearInterval(interval);
+        return;
+      }
+
+      const days = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+      const hours = Math.floor((diffMs / (1000 * 60 * 60)) % 24);
+      const minutes = Math.floor((diffMs / 1000 / 60) % 60);
+      const seconds = Math.floor((diffMs / 1000) % 60);
+
+      const parts = [];
+      if (days > 0) parts.push(`${days}d`);
+      if (hours > 0 || days > 0) parts.push(`${hours}h`);
+      if (minutes > 0 || hours > 0 || days > 0) parts.push(`${minutes}m`);
+      parts.push(`${seconds}s`);
+
+      setTimeLeft(parts.join(' '));
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [nextEpisodeAirstamp]);
+
+  const fetchExactCountdown = async () => {
+    if (showCountdown) {
+      setShowCountdown(false);
+      return;
+    }
+    
+    setShowCountdown(true);
+    
+    if (nextEpisodeAirstamp || isFetchingCountdown) return;
+    
+    setIsFetchingCountdown(true);
+    try {
+      const extResponse = await fetch(`${API_BASE_URL}/tv/${movie.id}/external_ids?api_key=${API_KEY}`);
+      const extData = await extResponse.json();
+      
+      let tvmazeLookupUrl = null;
+      if (extData.imdb_id) {
+        tvmazeLookupUrl = `https://api.tvmaze.com/lookup/shows?imdb=${extData.imdb_id}`;
+      } else if (extData.tvdb_id) {
+        tvmazeLookupUrl = `https://api.tvmaze.com/lookup/shows?thetvdb=${extData.tvdb_id}`;
+      }
+
+      if (tvmazeLookupUrl) {
+        const tvmazeSearchResponse = await fetch(tvmazeLookupUrl);
+        if (tvmazeSearchResponse.ok) {
+          const tvmazeShow = await tvmazeSearchResponse.json();
+          if (tvmazeShow && tvmazeShow._links && tvmazeShow._links.nextepisode) {
+             const nextEpResponse = await fetch(tvmazeShow._links.nextepisode.href);
+             const nextEpData = await nextEpResponse.json();
+             if (nextEpData.airstamp) {
+               setNextEpisodeAirstamp(nextEpData.airstamp);
+             }
+          }
+        }
+      }
+    } catch (e) {
+      console.error("TVmaze fetch failed", e);
+    } finally {
+      setIsFetchingCountdown(false);
+    }
+  };
 
   // --- HANDLERS ---
   const handleNkiri = () => {
@@ -81,6 +212,21 @@ const MovieDetailsModal = ({ movie, onClose, isFavorite, toggleFavorite, onSelec
         }
       }, 2000);
     }
+  };
+
+  const handleHiAnime = () => {
+    const title = encodeURIComponent(movie.title || movie.name);
+    window.open(`https://hianime.lol/search?keyword=${title}`, '_blank');
+  };
+
+  const handleNet77 = () => {
+    const title = encodeURIComponent(movie.title || movie.name);
+    window.open(`https://net77.cc/?s=${title}`, '_blank');
+  };
+
+  const handleCineHD = () => {
+    const title = encodeURIComponent(movie.title || movie.name);
+    window.open(`https://cinehd.app/?s=${title}`, '_blank');
   };
 
   const primaryButtonText = "Watch on Nkiri";
@@ -130,6 +276,18 @@ const MovieDetailsModal = ({ movie, onClose, isFavorite, toggleFavorite, onSelec
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                 allowFullScreen
               ></iframe>
+
+              <div className="absolute bottom-6 left-0 right-0 flex justify-center pointer-events-none z-50">
+                <button
+                  onClick={() => window.open(fallbackTrailerUrl, '_blank')}
+                  className="pointer-events-auto bg-black/80 hover:bg-black text-white border border-gray-600 px-5 py-2.5 rounded-full text-sm font-semibold shadow-2xl backdrop-blur-md transition-colors flex items-center gap-2"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5 text-red-500">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                  </svg>
+                  Video blocked? Search on YouTube
+                </button>
+              </div>
             </div>
           ) : (
             <>
@@ -150,11 +308,10 @@ const MovieDetailsModal = ({ movie, onClose, isFavorite, toggleFavorite, onSelec
                 </svg>
               </button>
 
-              {/* Poster Side */}
               <div className="w-full md:w-[45%] h-64 md:h-auto bg-black flex items-center justify-center p-2 pt-8 md:pt-2">
                 <img
                   src={movie.poster_path ? `https://image.tmdb.org/t/p/w500/${movie.poster_path}` : '/no-movie.png'}
-                  alt={movie.title}
+                  alt={movie.title || movie.name}
                   className="max-h-full w-auto object-contain shadow-lg rounded-lg"
                   loading="lazy"
                 />
@@ -163,7 +320,7 @@ const MovieDetailsModal = ({ movie, onClose, isFavorite, toggleFavorite, onSelec
               {/* Content Side */}
               <div className="w-full md:w-[55%] p-6 md:p-8 flex flex-col gap-4 overflow-y-auto">
                 <div className="flex justify-between items-start gap-4">
-                  <h2 className="text-3xl font-bold text-white leading-tight">{movie.title}</h2>
+                  <h2 className="text-3xl font-bold text-white leading-tight">{movie.title || movie.name}</h2>
 
                   <button
                     onClick={(e) => {
@@ -194,108 +351,200 @@ const MovieDetailsModal = ({ movie, onClose, isFavorite, toggleFavorite, onSelec
                   <span>•</span>
                   <span className="capitalize">{movie.original_language}</span>
                   <span>•</span>
-                  <span>{movie.release_date ? movie.release_date.split('-')[0] : 'N/A'}</span>
+                  <span>{movie.release_date ? movie.release_date.split('-')[0] : (movie.first_air_date ? movie.first_air_date.split('-')[0] : 'N/A')}</span>
                 </div>
 
                 <div className="mt-2">
                   <h3 className="text-gray-400 text-sm font-medium uppercase tracking-wider mb-2">Overview</h3>
                   <p className="text-gray-200 text-sm leading-relaxed">
-                    {movie.overview || "No description available for this movie."}
+                    {movie.overview || "No description available."}
                   </p>
                 </div>
 
-                <div className="mt-6 flex flex-col gap-3">
-                  {/* TRAILER BUTTON */}
-                  {trailerKey && (
-                    <button
-                      onClick={() => setShowTrailer(true)}
-                      className="w-full py-3 px-6 bg-red-600 hover:bg-red-700 text-white font-bold rounded-lg shadow-lg transform transition hover:scale-[1.02] flex items-center justify-center gap-2 mb-2"
+                <AnimatePresence mode="wait">
+                  {isLoading ? (
+                    <motion.div
+                      key="loading"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      className="mt-8 flex justify-center py-8"
                     >
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
-                        <path fillRule="evenodd" d="M4.5 5.653c0-1.426 1.529-2.33 2.779-1.643l11.54 6.348c1.295.712 1.295 2.573 0 3.285L7.28 19.991c-1.25.687-2.779-.217-2.779-1.643V5.653z" clipRule="evenodd" />
-                      </svg>
-                      Watch Trailer
-                    </button>
-                  )}
-
-                  {isAnime ? (
-                    <div className="flex flex-col gap-3">
-                      <p className="text-gray-300 text-sm font-medium mb-1">Select Streaming Source:</p>
-
-                      {/* AnimeSuge */}
-                      <button
-                        onClick={handleAnimeSuge}
-                        className="w-full py-3 px-6 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-bold rounded-lg shadow-lg transform transition hover:scale-[1.02] flex items-center justify-center gap-2"
-                      >
-                        Watch on AnimeSuge
-                      </button>
-
-                      {/* Nkiri */}
-                      <button
-                        onClick={handleNkiri}
-                        className="w-full py-3 px-6 bg-gray-700 hover:bg-gray-600 text-white font-bold rounded-lg shadow-lg transform transition hover:scale-[1.02] flex items-center justify-center gap-2"
-                      >
-                        Watch on Nkiri
-                      </button>
-
-                      {/* Anilab (Mobile Only) */}
-                      {isMobile && (
-                        <button
-                          onClick={handleAnilab}
-                          className="w-full py-3 px-6 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-bold rounded-lg shadow-lg transform transition hover:scale-[1.02] flex items-center justify-center gap-2"
-                        >
-                          Open Anilab App
-                        </button>
-                      )}
-                    </div>
+                      <div className="w-8 h-8 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
+                    </motion.div>
                   ) : (
-                    /* Non-Anime Default (Nkiri) */
-                    <button
-                      onClick={handleNkiri}
-                      className="w-full py-3 px-6 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-bold rounded-lg shadow-lg transform transition hover:scale-[1.02] flex items-center justify-center gap-2"
+                    <motion.div
+                      key="content"
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.3 }}
+                      className="w-full flex flex-col"
                     >
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
-                        <path fillRule="evenodd" d="M4.5 5.653c0-1.426 1.529-2.33 2.779-1.643l11.54 6.348c1.295.712 1.295 2.573 0 3.285L7.28 19.991c-1.25.687-2.779-.217-2.779-1.643V5.653z" clipRule="evenodd" />
-                      </svg>
-                      {primaryButtonText}
-                    </button>
-                  )}
-                </div>
-
-                <div className="mt-4 pt-4 border-t border-gray-800 grid grid-cols-2 gap-4 text-xs text-gray-400">
-                  <div>
-                    <span className="block mb-1 uppercase">Popularity</span>
-                    <span className="text-white text-sm">{Math.round(movie.popularity)}</span>
-                  </div>
-                  <div>
-                    <span className="block mb-1 uppercase">Vote Count</span>
-                    <span className="text-white text-sm">{movie.vote_count}</span>
-                  </div>
-                </div>
-
-                {/* RECOMMENDATIONS SECTION */}
-                {recommendations.length > 0 && (
-                  <div className="mt-4 pt-4 border-t border-gray-800">
-                    <h3 className="text-white font-semibold mb-3">You might also like</h3>
-                    <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide">
-                      {recommendations.slice(0, 10).map((rec) => (
-                        <div
-                          key={rec.id}
-                          className="min-w-[120px] w-[120px] cursor-pointer hover:opacity-80 transition-opacity"
-                          onClick={() => onSelectMovie && onSelectMovie(rec)}
-                        >
-                          <img
-                            src={rec.poster_path ? `https://image.tmdb.org/t/p/w200${rec.poster_path}` : '/no-movie.png'}
-                            alt={rec.title}
-                            className="w-full h-[180px] object-cover rounded-lg mb-2"
-                            loading="lazy"
-                          />
-                          <p className="text-xs text-center text-gray-300 line-clamp-2">{rec.title}</p>
+                      {/* TV SHOW / ANIME WEEKLY TRACKER */}
+                      {mediaType === 'tv' && (tvStatus || nextEpisode) && (
+                        <div className="mt-4 bg-[#2a2a2a] border border-gray-700 rounded-lg p-3">
+                          {tvStatus === 'Ended' || tvStatus === 'Canceled' ? (
+                            <p className="text-gray-300 text-sm">📺 Series Status: <span className="text-white font-semibold">{tvStatus === 'Ended' ? 'Completed' : 'Canceled'}</span></p>
+                          ) : nextEpisode ? (
+                            <div>
+                              <p className="text-gray-300 text-sm mb-1">
+                                📺 Next Episode: <span className="text-white font-semibold">Season {nextEpisode.season_number}, Episode {nextEpisode.episode_number}</span>
+                              </p>
+                              {nextEpisode.name && <p className="text-gray-400 text-xs mb-1">"{nextEpisode.name}"</p>}
+                              <p className="text-indigo-400 text-xs font-medium mb-2">
+                                Airs on {new Date(nextEpisode.air_date).toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+                              </p>
+                              
+                              <button
+                                onClick={fetchExactCountdown}
+                                className="text-xs bg-indigo-600/20 hover:bg-indigo-600/40 text-indigo-300 py-1.5 px-3 rounded-full transition-colors border border-indigo-500/30 block mb-2"
+                              >
+                                {showCountdown ? 'Hide Countdown' : 'See exact countdown in my timezone'}
+                              </button>
+                              
+                              {showCountdown && (
+                                <div className="bg-gray-900/50 p-3 rounded-lg border border-gray-700/50">
+                                  {isFetchingCountdown ? (
+                                    <p className="text-gray-400 text-xs italic">Fetching exact time from network...</p>
+                                  ) : timeLeft && nextEpisodeAirstamp ? (
+                                    <>
+                                      <p className="text-gray-400 text-[10px] uppercase tracking-wider mb-1">Starts in (Local Time)</p>
+                                      <p className="text-green-400 font-mono text-sm tracking-wide font-bold">{timeLeft}</p>
+                                    </>
+                                  ) : (
+                                     <p className="text-red-400 text-xs italic">Exact network broadcast time not available.</p>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                          ) : (
+                            <p className="text-gray-300 text-sm">📺 Series Status: <span className="text-white font-semibold">{tvStatus || 'Ongoing'}</span></p>
+                          )}
                         </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
+                      )}
+
+                      <div className="mt-6 flex flex-col gap-3">
+                        {/* TRAILER BUTTON */}
+                        {(trailerKey || fallbackTrailerUrl) && (
+                          <button
+                            onClick={() => {
+                              if (trailerKey) {
+                                setShowTrailer(true);
+                              } else {
+                                window.open(fallbackTrailerUrl, '_blank');
+                              }
+                            }}
+                            className="w-full py-3 px-6 bg-red-600 hover:bg-red-700 text-white font-bold rounded-lg shadow-lg transform transition hover:scale-[1.02] flex items-center justify-center gap-2 mb-2"
+                          >
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
+                              <path fillRule="evenodd" d="M4.5 5.653c0-1.426 1.529-2.33 2.779-1.643l11.54 6.348c1.295.712 1.295 2.573 0 3.285L7.28 19.991c-1.25.687-2.779-.217-2.779-1.643V5.653z" clipRule="evenodd" />
+                            </svg>
+                            {trailerKey ? 'Watch Trailer' : 'Find Trailer on YouTube'}
+                          </button>
+                        )}
+
+                        <div className="flex flex-col gap-3">
+                          {isReleased ? (
+                            <>
+                              <p className="text-gray-300 text-sm font-medium mb-1">Select Streaming Source:</p>
+
+                              {isAnime && (
+                                <>
+                                  <button
+                                    onClick={handleAnimeSuge}
+                                    className="w-full py-3 px-6 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-bold rounded-lg shadow-lg transform transition hover:scale-[1.02] flex items-center justify-center gap-2"
+                                  >
+                                    Watch on AnimeSuge
+                                  </button>
+                                  <button
+                                    onClick={handleHiAnime}
+                                    className="w-full py-3 px-6 bg-gradient-to-r from-pink-600 to-rose-600 hover:from-pink-700 hover:to-rose-700 text-white font-bold rounded-lg shadow-lg transform transition hover:scale-[1.02] flex items-center justify-center gap-2"
+                                  >
+                                    Watch on HiAnime
+                                  </button>
+                                  {isMobile && (
+                                    <button
+                                      onClick={handleAnilab}
+                                      className="w-full py-3 px-6 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-bold rounded-lg shadow-lg transform transition hover:scale-[1.02] flex items-center justify-center gap-2"
+                                    >
+                                      Open Anilab App
+                                    </button>
+                                  )}
+                                </>
+                              )}
+
+                              <button
+                                onClick={handleNkiri}
+                                className="w-full py-3 px-6 bg-gray-700 hover:bg-gray-600 text-white font-bold rounded-lg shadow-lg transform transition hover:scale-[1.02] flex items-center justify-center gap-2"
+                              >
+                                Watch on Nkiri
+                              </button>
+
+                              <button
+                                onClick={handleNet77}
+                                className="w-full py-3 px-6 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white font-bold rounded-lg shadow-lg transform transition hover:scale-[1.02] flex items-center justify-center gap-2"
+                              >
+                                Watch on Net77
+                              </button>
+
+                              <button
+                                onClick={handleCineHD}
+                                className="w-full py-3 px-6 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-bold rounded-lg shadow-lg transform transition hover:scale-[1.02] flex items-center justify-center gap-2"
+                              >
+                                Watch on CineHD
+                              </button>
+                            </>
+                          ) : (
+                            <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-4 text-center mt-2">
+                              <p className="text-red-400 text-sm font-medium">This title has not been released yet.</p>
+                              {releaseDateStr ? (
+                                 <p className="text-red-400/80 text-xs mt-1">Expected Release: {new Date(releaseDateStr).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+                              ) : (
+                                 <p className="text-red-400/80 text-xs mt-1">Release date is currently unknown.</p>
+                              )}
+                              <p className="text-red-400/80 text-xs mt-2 italic">Streaming sources will become available on release day.</p>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="mt-4 pt-4 border-t border-gray-800 grid grid-cols-2 gap-4 text-xs text-gray-400">
+                        <div>
+                          <span className="block mb-1 uppercase">Popularity</span>
+                          <span className="text-white text-sm">{Math.round(movie.popularity)}</span>
+                        </div>
+                        <div>
+                          <span className="block mb-1 uppercase">Vote Count</span>
+                          <span className="text-white text-sm">{movie.vote_count}</span>
+                        </div>
+                      </div>
+
+                      {/* RECOMMENDATIONS SECTION */}
+                      {recommendations.length > 0 && (
+                        <div className="mt-4 pt-4 border-t border-gray-800">
+                          <h3 className="text-white font-semibold mb-3">You might also like</h3>
+                          <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide">
+                            {recommendations.slice(0, 10).map((rec) => (
+                              <div
+                                key={rec.id}
+                                className="min-w-[120px] w-[120px] cursor-pointer hover:opacity-80 transition-opacity"
+                                onClick={() => onSelectMovie && onSelectMovie(rec)}
+                              >
+                                <img
+                                  src={rec.poster_path ? `https://image.tmdb.org/t/p/w200${rec.poster_path}` : '/no-movie.png'}
+                                  alt={rec.title || rec.name}
+                                  className="w-full h-[180px] object-cover rounded-lg mb-2"
+                                  loading="lazy"
+                                />
+                                <p className="text-xs text-center text-gray-300 line-clamp-2">{rec.title || rec.name}</p>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
             </>
           )}

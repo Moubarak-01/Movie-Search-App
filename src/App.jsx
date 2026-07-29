@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import Search from './components/Search.jsx'
 import Spinner from './components/Spinner.jsx'
 import MovieCard from './components/MovieCard.jsx'
+import TrendingCard from './components/TrendingCard.jsx'
 import MovieDetailsModal from './components/MovieDetailsModal.jsx'
 import MovieCardSkeleton from './components/MovieCardSkeleton.jsx'
 import BottomNav from './components/BottomNav.jsx'
@@ -32,6 +33,8 @@ const App = () => {
   const [errorMessage, setErrorMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [trendingMovies, setTrendingMovies] = useState([]);
+  const [trendingSeries, setTrendingSeries] = useState([]);
+  const [trendingAnime, setTrendingAnime] = useState([]);
   const [selectedMovie, setSelectedMovie] = useState(null);
   const [activeTab, setActiveTab] = useState('home');
   const [isFilterOpen, setIsFilterOpen] = useState(false);
@@ -41,7 +44,9 @@ const App = () => {
   const { favorites, addFavorite, removeFavorite, isFavorite } = useFavorites();
   const { history, addToHistory } = useWatchHistory();
 
-  useDebounce(() => setDebouncedSearchTerm(searchTerm), 500, [searchTerm])
+  useDebounce(() => setDebouncedSearchTerm(searchTerm), 2200, [searchTerm])
+
+  const isSearching = isLoading;
 
   // Handle Scroll to Section
   const handleTabChange = (tabId) => {
@@ -76,9 +81,10 @@ const App = () => {
     setErrorMessage('');
 
     try {
+      // Use search/multi to search movies and TV shows, use trending/all/week when no query
       const endpoint = query
-        ? `${API_BASE_URL}/search/movie?api_key=${API_KEY}&query=${encodeURIComponent(query)}`
-        : `${API_BASE_URL}/discover/movie?sort_by=popularity.desc&api_key=${API_KEY}`;
+        ? `${API_BASE_URL}/search/multi?api_key=${API_KEY}&query=${encodeURIComponent(query)}`
+        : `${API_BASE_URL}/trending/all/week?api_key=${API_KEY}`;
 
       const response = await fetch(endpoint, API_OPTIONS);
 
@@ -94,10 +100,12 @@ const App = () => {
         return;
       }
 
-      setMovieList(data.results || []);
+      // Filter out people from multi search
+      const filteredResults = (data.results || []).filter(item => item.media_type !== 'person');
+      setMovieList(filteredResults);
 
-      if (query && data.results.length > 0) {
-        await updateSearchCount(query, data.results[0]);
+      if (query && filteredResults.length > 0) {
+        await updateSearchCount(query, filteredResults[0]);
       }
     } catch (error) {
       console.error(`Error fetching movies: ${error}`);
@@ -113,11 +121,14 @@ const App = () => {
       let movies = await getTrendingMovies();
 
       if (!Array.isArray(movies) || movies.length === 0) {
+        // Fetch trending Movies
         const tmdbResp = await fetch(`${API_BASE_URL}/trending/movie/week?api_key=${API_KEY}`, API_OPTIONS);
 
         if (tmdbResp.ok) {
           const tmdbData = await tmdbResp.json();
-          movies = (Array.isArray(tmdbData.results) ? tmdbData.results : []).slice(0, 10).map(m => ({
+          // Filter out people, just in case
+          const validTrending = (Array.isArray(tmdbData.results) ? tmdbData.results : []).filter(item => item.media_type !== 'person');
+          movies = validTrending.slice(0, 10).map(m => ({
             $id: m.id,
             id: m.id,
             title: m.title || m.name,
@@ -125,12 +136,15 @@ const App = () => {
             // VITAL: Pass all data needed for Modal logic
             overview: m.overview,
             vote_average: m.vote_average,
-            release_date: m.release_date,
+            release_date: m.release_date || m.first_air_date,
             original_language: m.original_language,
             poster_path: m.poster_path,
+            backdrop_path: m.backdrop_path,
             vote_count: m.vote_count,
             popularity: m.popularity,
-            genre_ids: m.genre_ids // <--- ADDED THIS so we can detect Anime in Trending
+            genre_ids: m.genre_ids, // <--- ADDED THIS so we can detect Anime in Trending
+            name: m.name, // Pass name for TV shows
+            first_air_date: m.first_air_date
           }));
         }
       }
@@ -142,19 +156,114 @@ const App = () => {
     }
   }
 
+  const loadTrendingSeries = async () => {
+    try {
+      const tmdbResp = await fetch(`${API_BASE_URL}/trending/tv/week?api_key=${API_KEY}`, API_OPTIONS);
+
+      if (tmdbResp.ok) {
+        const tmdbData = await tmdbResp.json();
+        const validTrending = (Array.isArray(tmdbData.results) ? tmdbData.results : [])
+          .filter(item => item.media_type !== 'person')
+          .filter(item => !(item.original_language === 'ja' && (item.genre_ids?.includes(16) || item.genre_ids?.includes(10759))));
+        const series = validTrending.slice(0, 10).map(m => ({
+          $id: m.id,
+          id: m.id,
+          title: m.name,
+          poster_url: m.poster_path ? `https://image.tmdb.org/t/p/w500${m.poster_path}` : '',
+          overview: m.overview,
+          vote_average: m.vote_average,
+          release_date: m.first_air_date,
+          original_language: m.original_language,
+          poster_path: m.poster_path,
+          backdrop_path: m.backdrop_path,
+          vote_count: m.vote_count,
+          popularity: m.popularity,
+          genre_ids: m.genre_ids,
+          name: m.name,
+          first_air_date: m.first_air_date
+        }));
+        setTrendingSeries(series);
+      }
+    } catch (error) {
+      console.error(`Error fetching trending series: ${error}`);
+      setTrendingSeries([]);
+    }
+  }
+
+  const loadTrendingAnime = async () => {
+    try {
+      let allAnime = [];
+      // Fetch up to 5 pages of trending content to find enough anime
+      for (let page = 1; page <= 5; page++) {
+        const tmdbResp = await fetch(`${API_BASE_URL}/trending/all/week?api_key=${API_KEY}&page=${page}`, API_OPTIONS);
+        if (tmdbResp.ok) {
+          const tmdbData = await tmdbResp.json();
+          const animeInPage = (Array.isArray(tmdbData.results) ? tmdbData.results : [])
+            .filter(item => item.media_type !== 'person')
+            .filter(item => item.original_language === 'ja' && item.genre_ids?.includes(16));
+          
+          allAnime = [...allAnime, ...animeInPage];
+          
+          if (allAnime.length >= 10) break;
+        }
+      }
+
+      // If we somehow didn't find 10 trending anime, fallback to discover
+      if (allAnime.length < 10) {
+        const fallbackResp = await fetch(`${API_BASE_URL}/discover/tv?api_key=${API_KEY}&sort_by=popularity.desc&with_genres=16&with_original_language=ja`, API_OPTIONS);
+        if (fallbackResp.ok) {
+           const fallbackData = await fallbackResp.json();
+           const validTrending = (Array.isArray(fallbackData.results) ? fallbackData.results : []).filter(item => item.media_type !== 'person');
+           
+           // Filter out duplicates
+           const existingIds = new Set(allAnime.map(a => a.id));
+           const additionalAnime = validTrending.filter(a => !existingIds.has(a.id));
+           
+           allAnime = [...allAnime, ...additionalAnime];
+        }
+      }
+
+      const anime = allAnime.slice(0, 10).map(m => ({
+        $id: m.id,
+        id: m.id,
+        title: m.title || m.name,
+        poster_url: m.poster_path ? `https://image.tmdb.org/t/p/w500${m.poster_path}` : '',
+        overview: m.overview,
+        vote_average: m.vote_average,
+        release_date: m.release_date || m.first_air_date,
+        original_language: m.original_language,
+        poster_path: m.poster_path,
+        backdrop_path: m.backdrop_path,
+        vote_count: m.vote_count,
+        popularity: m.popularity,
+        genre_ids: m.genre_ids,
+        name: m.name,
+        first_air_date: m.first_air_date,
+        media_type: m.media_type
+      }));
+      setTrendingAnime(anime);
+    } catch (error) {
+      console.error(`Error fetching trending anime: ${error}`);
+      setTrendingAnime([]);
+    }
+  }
+
   useEffect(() => {
     fetchMovies(debouncedSearchTerm);
   }, [debouncedSearchTerm]);
 
   useEffect(() => {
     loadTrendingMovies();
+    loadTrendingSeries();
+    loadTrendingAnime();
   }, []);
 
-  // --- PULL TO REFRESH ---
   const handleRefresh = async () => {
     await Promise.all([
       fetchMovies(debouncedSearchTerm),
-      loadTrendingMovies()
+      loadTrendingMovies(),
+      loadTrendingSeries(),
+      loadTrendingAnime()
     ]);
   };
 
@@ -180,49 +289,94 @@ const App = () => {
 
       <div className="pattern" />
       <div className="wrapper">
-          <header className="w-full flex justify-between items-center px-8 py-4 z-50">
-            <div className="flex items-center gap-3">
-              <img src="/mouvie-logo-removebg-preview.png" alt="Mouvie Logo" className="h-56 w-auto object-contain" />
-            </div>
-            <nav className="hidden md:flex items-center gap-6">
-              <button
-                onClick={() => handleTabChange('home')}
-                className={`text-lg font-medium transition-colors ${activeTab === 'home' || activeTab === 'trending' ? 'text-white border-b-2 border-white' : 'text-gray-400 hover:text-white'}`}
-              >
-                Home
-              </button>
-              <button
-                onClick={() => handleTabChange('favorites')}
-                className={`text-lg font-medium transition-colors ${activeTab === 'favorites' ? 'text-white border-b-2 border-white' : 'text-gray-400 hover:text-white'}`}
-              >
-                Favorites
-              </button>
-            </nav>
-          </header>
-          <div className="flex justify-center mx-auto my-6" style={{ maxWidth: '1700px' }}>
-            <img src="/hero.png" alt="Hero Banner" className="w-full h-auto object-contain block" />
+        <header className="w-full flex justify-between items-center px-8 py-4 z-50">
+          <div className="flex items-center gap-3">
+            <img src="/mouvie-logo-removebg-preview.png" alt="Mouvie Logo" className="h-56 w-auto object-contain" />
           </div>
-          <h1>Find <span className="text-gradient">Movies</span> You will Enjoy Without too much Hassle</h1>
-          <section id="search">
-            <Search searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
-          </section>
+          <nav className="hidden md:flex items-center gap-6">
+            <button
+              onClick={() => handleTabChange('home')}
+              className={`text-lg font-medium transition-colors ${activeTab === 'home' || activeTab === 'trending' ? 'text-white border-b-2 border-white' : 'text-gray-400 hover:text-white'}`}
+            >
+              Home
+            </button>
+            <button
+              onClick={() => handleTabChange('favorites')}
+              className={`text-lg font-medium transition-colors ${activeTab === 'favorites' ? 'text-white border-b-2 border-white' : 'text-gray-400 hover:text-white'}`}
+            >
+              Favorites
+            </button>
+          </nav>
+        </header>
+        <div className="flex justify-center mx-auto my-6" style={{ maxWidth: '1700px' }}>
+          <img src="/hero.png" alt="Hero Banner" className="w-full h-auto object-contain block" />
+        </div>
+        <h1>Find <span className="text-gradient">Movies, Series & Animes</span> You will Enjoy Without too much Hassle</h1>
+        <section id="search">
+          <Search
+            searchTerm={searchTerm}
+            setSearchTerm={setSearchTerm}
+            isSearching={isSearching}
+            onSubmit={() => setDebouncedSearchTerm(searchTerm)}
+          />
+        </section>
 
-        {activeTab === 'home' && trendingMovies.length > 0 && (
+        {activeTab === 'home' && !searchTerm && trendingMovies.length > 0 && (
           <section className="trending" id="trending">
             <h2>Trending Movies</h2>
             <ul>
               {trendingMovies.map((movie, index) => (
-                <li key={movie.$id || index} onClick={() => handleMovieClick(movie)} className="cursor-pointer hover:opacity-80 transition-opacity">
-                  <p>{index + 1}</p>
-                  <img src={movie.poster_url} alt={movie.title} />
-                </li>
+                <TrendingCard
+                  key={movie.$id || index}
+                  item={movie}
+                  index={index}
+                  onClick={handleMovieClick}
+                  isFavorite={isFavorite(movie.id)}
+                  toggleFavorite={toggleFavorite}
+                />
+              ))}
+            </ul>
+          </section>
+        )}
+
+        {activeTab === 'home' && !searchTerm && trendingSeries.length > 0 && (
+          <section className="trending mt-6" id="trending-series">
+            <h2>Trending Series</h2>
+            <ul>
+              {trendingSeries.map((series, index) => (
+                <TrendingCard
+                  key={series.$id || index}
+                  item={series}
+                  index={index}
+                  onClick={handleMovieClick}
+                  isFavorite={isFavorite(series.id)}
+                  toggleFavorite={toggleFavorite}
+                />
+              ))}
+            </ul>
+          </section>
+        )}
+
+        {activeTab === 'home' && !searchTerm && trendingAnime.length > 0 && (
+          <section className="trending mt-6" id="trending-anime">
+            <h2>Trending Animes</h2>
+            <ul>
+              {trendingAnime.map((anime, index) => (
+                <TrendingCard
+                  key={anime.$id || index}
+                  item={anime}
+                  index={index}
+                  onClick={handleMovieClick}
+                  isFavorite={isFavorite(anime.id)}
+                  toggleFavorite={toggleFavorite}
+                />
               ))}
             </ul>
           </section>
         )}
 
         <section className="all-movies mt-6" id="all-movies">
-          <h2>{activeTab === 'favorites' ? 'Your Favorites' : 'All Movies'}</h2>
+          <h2>{activeTab === 'favorites' ? 'Your Favorites' : 'All Movies, Series & Animes'}</h2>
 
           {activeTab === 'favorites' && favorites.length === 0 ? (
             <div className="text-center text-gray-400 py-10">
@@ -258,10 +412,11 @@ const App = () => {
                   }
                   return true;
                 })
-                .map((movie) => (
+                .map((movie, index) => (
                   <MovieCard
                     key={movie.id}
                     movie={movie}
+                    index={index}
                     onClick={handleMovieClick}
                     isFavorite={isFavorite(movie.id)}
                     toggleFavorite={toggleFavorite}

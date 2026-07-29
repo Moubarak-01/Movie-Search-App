@@ -12,7 +12,7 @@
 
 **Live App:** [https://movie-search-mu-three.vercel.app/](https://movie-search-mu-three.vercel.app/)
 
-A modern, premium movie discovery platform that bridges the gap between searching for content and actually watching it. Built with React 19, Tailwind v4, and powered by TMDB API and Appwrite, this application provides intelligent routing to multiple streaming sources, robust personalization, and a visually stunning "Space Dark" aesthetic.
+A modern, premium discovery platform for Movies, Series, and Anime that bridges the gap between finding content and actually watching it. Built with React 19, Tailwind v4, and powered by TMDB API and Appwrite. Mouvie features intelligent categorization, smart trailer fetching, and a visually stunning "Space Dark" aesthetic with Netflix-style hover interactions.
 
 ---
 
@@ -22,12 +22,14 @@ Mouvie solves a common problem: finding where to watch your favorite movies and 
 
 ### Key Highlights
 
-🎯 **Smart Streaming Selection** - Auto-detects Anime vs. Movies and routes to the best source (AnimeSuge, Nkiri).  
+🎯 **Smart Streaming Selection** - Auto-detects Anime vs. Movies and routes to the best sources (AnimeSuge, HiAnime, Nkiri).  
+🍿 **Trending Categories** - Distinct trending sections for Movies, TV Series, and Anime.  
+✨ **Netflix-Style Hover Cards** - Interactive hover cards that dynamically adjust to your viewport.  
+🛡️ **Unreleased Title Protection** - Intelligently hides streaming options for content that hasn't premiered yet.  
 ❤️ **Personalization** - "Favorites" and "Watch History" that persist across sessions.  
-🧠 **Smart Recommendations** - "You might also like" suggestions for every movie.  
+🧠 **Smart Recommendations** - "You might also like" suggestions tailored to every title.  
 📱 **Universal Design** - Flawless experience on both Mobile (Bottom Nav) and Desktop (Top Nav).  
-⚡ **Performance** - Debounced search, lazy-loaded images, and skeleton states.  
-🌑 **Premium Dark Theme** - Immersive space-themed background.
+⚡ **Performance** - 2-second debounced search with loading indicators, lazy-loaded images, and skeleton states.  
 
 ---
 
@@ -58,27 +60,29 @@ Mouvie solves a common problem: finding where to watch your favorite movies and 
 ## 🔋 Features
 
 ### 🔍 Search & Discovery
-- **Real-time Search**: Debounced input (500ms) for efficient API usage.
-- **Rich Metadata**: Displays posters, ratings (⭐), release years, and languages.
+- **Real-time Search**: 2-second debounced input with a custom animated loading spinner. Hides trending sections instantly upon typing to focus purely on results.
+- **Rich Metadata**: Displays posters, match percentages, release years, and languages.
 - **Loading States**: Shimmering skeletons for a perceived faster load time.
 
-### 👤 Personalization (New!)
+### 🎭 Smart Movie & TV Modal
+Click any movie or show to reveal a feature-rich modal with smooth layout transitions:
+- **Streaming Options**: Direct links to **AnimeSuge / HiAnime** (for anime) or **Nkiri / Net77 / CineHD** (for movies).
+- **Strict Release Date Checks**: Protects against fake API statuses by strictly comparing calendar release dates to safely lock streaming options for unreleased media.
+- **TV & Anime Episode Tracker**: Live TVmaze integration automatically fetches global air times for the next episode and converts it to a highly-precise ticking countdown timer in your local timezone.
+- **Advanced Trailer Fetching**: Multi-language trailer support pulls official Japanese, Korean, or Chinese trailers when available. 
+- **Geoblock Fallback**: If a studio region-blocks their YouTube trailer, a smart fallback button allows you to instantly search YouTube for fan re-uploads.
+- **Recommendations**: A horizontal carousel of similar movies.
+
+### 👤 Personalization
 - **Favorites System**: Heart (<3) any movie to save it to your personal "Favorites" list.
 - **Watch History**: Automatically tracks the last 20 movies you've viewed.
 - **Persisted Data**: Your data is saved via `localStorage`, so it's there when you return.
 
-### 🎭 Smart Movie Modal
-Click any movie to reveal a feature-rich modal:
-- **Streaming Options**: Direct links to **AnimeSuge** (for anime) or **Nkiri** (for movies).
-- **Trailers**: Embedded YouTube trailer player.
-- **Recommendations**: A horizontal carousel of similar movies.
-- **Actions**: Add to Favorites, view full plot, see popularity stats.
-
 ### 📱 Responsive & Adaptive UI
 The app adapts its navigation based on the device:
-- **Mobile**: Sticky Bottom Navigation Bar (Home, Search, Favorites).
+- **Dynamic Tooltips**: Hover cards calculate screen boundaries to never get cut off by the browser window.
+- **Mobile**: Sticky Bottom Navigation Bar (Home, Search, Favorites) and swipe-to-dismiss modals.
 - **Desktop**: Sleek Top Navigation menu.
-- **Gestures**: Swipe-to-dismiss support for modals on mobile.
 
 ---
 
@@ -117,28 +121,6 @@ Visit `http://localhost:5173` to see the app in action!
 
 ---
 
-## 🎯 Architecture
-
-### Project Structure
-```
-src/
-├── components/        # Reusable UI components
-│   ├── MovieCard.jsx
-│   ├── MovieDetailsModal.jsx
-│   ├── BottomNav.jsx  # Mobile Navigation
-│   └── ...
-├── hooks/             # Custom React Hooks
-│   ├── useFavorites.js
-│   ├── useWatchHistory.js
-│   └── usePullToRefresh.js
-├── App.jsx            # Main Application Layout
-├── appwrite.js        # Backend Logic
-├── index.css          # Tailwind & Global Styles
-└── main.jsx           # Entry Point
-```
-
----
-
 ## 🤝 Contributing
 
 Contributions are always welcome!
@@ -168,4 +150,4 @@ Distributed under the MIT License. See `LICENSE` for more information.
 
 - **TMDB API** for the incredible movie database.
 - **Appwrite** for the seamless backend integration.
-- **AnimeSuge & Nkiri** for streaming capabilities.
+- **AnimeSuge, HiAnime & Nkiri** for streaming capabilities.
