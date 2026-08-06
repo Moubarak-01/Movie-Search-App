@@ -22,8 +22,9 @@ Mouvie solves a common problem: finding where to watch your favorite movies and 
 
 ### Key Highlights
 
+🎯 **Hero Carousel** - Dynamic, auto-scrolling hero section blending the top 30 movies, series, and animes with premium fade-in typography, hover effects, and keyboard navigation.
 🎯 **Smart Streaming Selection** - Auto-detects Anime vs. Movies and routes to the best sources (AnimeSuge, HiAnime, Nkiri).  
-🍿 **Trending Categories** - Distinct trending sections for Movies, TV Series, and Anime.  
+🍿 **Trending Categories** - Distinct trending sections for Movies, TV Series, and Anime, completely deduplicated for a seamless browsing experience.  
 ✨ **Netflix-Style Hover Cards** - Interactive hover cards that dynamically adjust to your viewport.  
 🛡️ **Unreleased Title Protection** - Intelligently hides streaming options for content that hasn't premiered yet.  
 ❤️ **Personalization** - "Favorites" and "Watch History" that persist across sessions.  

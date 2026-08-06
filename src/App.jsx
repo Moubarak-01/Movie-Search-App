@@ -7,6 +7,7 @@ import MovieDetailsModal from './components/MovieDetailsModal.jsx'
 import MovieCardSkeleton from './components/MovieCardSkeleton.jsx'
 import BottomNav from './components/BottomNav.jsx'
 import FilterMenu from './components/FilterMenu.jsx'
+import HeroCarousel from './components/HeroCarousel.jsx'
 import { useDebounce } from 'react-use'
 import { usePullToRefresh } from './hooks/usePullToRefresh.js'
 import { useFavorites } from './hooks/useFavorites.js'
@@ -39,6 +40,7 @@ const App = () => {
   const [activeTab, setActiveTab] = useState('home');
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [filters, setFilters] = useState({ genres: [], minRating: 0 });
+  const [searchSuggestions, setSearchSuggestions] = useState([]);
 
   // Custom Hooks
   const { favorites, addFavorite, removeFavorite, isFavorite } = useFavorites();
@@ -106,6 +108,29 @@ const App = () => {
 
       if (query && filteredResults.length > 0) {
         await updateSearchCount(query, filteredResults[0]);
+        setSearchSuggestions([]);
+      } else if (query && filteredResults.length === 0) {
+        // Try a broader search to get related suggestions (e.g. Ben 10000 -> Ben, supermens -> Super)
+        const words = query.trim().split(' ');
+        const backupQuery = words.length > 1 ? words[0] : query.substring(0, Math.min(query.length - 1, 5));
+        
+        if (backupQuery && backupQuery.length >= 3) {
+          try {
+            const backupEndpoint = `${API_BASE_URL}/search/multi?api_key=${API_KEY}&query=${encodeURIComponent(backupQuery)}`;
+            const backupResp = await fetch(backupEndpoint, API_OPTIONS);
+            if (backupResp.ok) {
+              const backupData = await backupResp.json();
+              const validBackup = (backupData.results || []).filter(item => item.media_type !== 'person');
+              setSearchSuggestions(validBackup);
+            }
+          } catch (e) {
+            console.error("Backup search failed", e);
+          }
+        } else {
+          setSearchSuggestions([]);
+        }
+      } else {
+        setSearchSuggestions([]);
       }
     } catch (error) {
       console.error(`Error fetching movies: ${error}`);
@@ -198,9 +223,11 @@ const App = () => {
         const tmdbResp = await fetch(`${API_BASE_URL}/trending/all/week?api_key=${API_KEY}&page=${page}`, API_OPTIONS);
         if (tmdbResp.ok) {
           const tmdbData = await tmdbResp.json();
+          const existingIds = new Set(allAnime.map(a => a.id));
           const animeInPage = (Array.isArray(tmdbData.results) ? tmdbData.results : [])
             .filter(item => item.media_type !== 'person')
-            .filter(item => item.original_language === 'ja' && item.genre_ids?.includes(16));
+            .filter(item => item.original_language === 'ja' && item.genre_ids?.includes(16))
+            .filter(item => !existingIds.has(item.id));
           
           allAnime = [...allAnime, ...animeInPage];
           
@@ -308,9 +335,7 @@ const App = () => {
             </button>
           </nav>
         </header>
-        <div className="flex justify-center mx-auto my-6" style={{ maxWidth: '1700px' }}>
-          <img src="/hero.png" alt="Hero Banner" className="w-full h-auto object-contain block" />
-        </div>
+
         <h1>Find <span className="text-gradient">Movies, Series & Animes</span> You will Enjoy Without too much Hassle</h1>
         <section id="search">
           <Search
@@ -320,6 +345,28 @@ const App = () => {
             onSubmit={() => setDebouncedSearchTerm(searchTerm)}
           />
         </section>
+
+        {(() => {
+          const combinedTrending = [];
+          const seenIds = new Set();
+          
+          const addUnique = (item) => {
+            if (item && !seenIds.has(item.id)) {
+              seenIds.add(item.id);
+              combinedTrending.push(item);
+            }
+          };
+
+          for (let i = 0; i < 10; i++) {
+            addUnique(trendingMovies[i]);
+            addUnique(trendingSeries[i]);
+            addUnique(trendingAnime[i]);
+          }
+          
+          return activeTab === 'home' && !searchTerm && combinedTrending.length > 0 && (
+            <HeroCarousel items={combinedTrending} onClick={handleMovieClick} />
+          );
+        })()}
 
         {activeTab === 'home' && !searchTerm && trendingMovies.length > 0 && (
           <section className="trending" id="trending">
@@ -420,10 +467,31 @@ const App = () => {
 
                 if (filteredList.length === 0 && (searchTerm || filters.genres.length > 0 || filters.minRating > 0)) {
                   return (
-                    <div className="text-center text-gray-400 py-20 w-full flex flex-col items-center justify-center">
-                      <p className="text-2xl font-bold text-white mb-2">Oops! No results found.</p>
-                      <p className="text-base max-w-md">We couldn't find any matches {searchTerm ? <span>for <span className="text-white font-medium">"{searchTerm}"</span></span> : "with the current filters"}.</p>
-                      <p className="text-sm mt-2 text-gray-500">Try adjusting your search, clearing filters, or checking for typos.</p>
+                    <div className="w-full flex flex-col items-center">
+                      <div className="text-center text-gray-400 py-16 w-full flex flex-col items-center justify-center">
+                        <p className="text-2xl font-bold text-white mb-2">Oops! No results found.</p>
+                        <p className="text-base max-w-md">We couldn't find any matches {searchTerm ? <span>for <span className="text-white font-medium">"{searchTerm}"</span></span> : "with the current filters"}.</p>
+                        <p className="text-sm mt-2 text-gray-500">Try adjusting your search, clearing filters, or checking for typos.</p>
+                      </div>
+
+                      {/* Suggestions for Home Tab */}
+                      {activeTab !== 'favorites' && (searchSuggestions.length > 0 || trendingMovies.length > 0) && (
+                        <div className="w-full mt-4 pt-8 border-t border-white/10">
+                          <h3 className="text-xl font-bold text-white mb-6 text-left">You might also like...</h3>
+                          <ul className="grid grid-cols-1 gap-5 xs:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+                            {(searchSuggestions.length > 0 ? searchSuggestions : trendingMovies).slice(0, 4).map((movie, index) => (
+                              <MovieCard
+                                key={movie.id}
+                                movie={movie}
+                                index={index}
+                                onClick={handleMovieClick}
+                                isFavorite={isFavorite(movie.id)}
+                                toggleFavorite={toggleFavorite}
+                              />
+                            ))}
+                          </ul>
+                        </div>
+                      )}
                     </div>
                   );
                 }

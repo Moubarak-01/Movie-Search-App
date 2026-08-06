@@ -100,6 +100,13 @@ const MovieCard = ({ movie, onClick, isFavorite, toggleFavorite, index = 0 }) =>
           e.stopPropagation();
           toggleFavorite(movie);
         }}
+        onMouseEnter={() => {
+          if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current);
+        }}
+        onMouseLeave={() => {
+          // Restart the timer when the mouse leaves the button but is still on the card
+          handleMouseEnter();
+        }}
       >
         <svg
           xmlns="http://www.w3.org/2000/svg"
