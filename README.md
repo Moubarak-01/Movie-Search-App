@@ -39,7 +39,10 @@ Mouvie solves a common problem: finding where to watch your favorite movies and 
 <div align="center">
   <img src="preview 1.png" alt="Mouvie Screenshot 1" width="300"/>  
   <img src="preview 2.png" alt="Mouvie Screenshot 2" width="300"/>  
-  <img src="preview 3.png" alt="Mouvie Screenshot 3" width="300"/>  
+  <img src="preview 3.png" alt="Mouvie Screenshot 3" width="300"/> 
+  <img src="preview 4.png" alt="Mouvie Screenshot 3" width="300"/> 
+  <img src="preview 5.png" alt="Mouvie Screenshot 3" width="300"/> 
+  <img src="preview 6.png" alt="Mouvie Screenshot 3" width="300"/>  
 </div>
 
 ---
