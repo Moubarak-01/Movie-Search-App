@@ -554,7 +554,7 @@ const App = () => {
                       {activeTab !== 'favorites' && (searchSuggestions.length > 0 || trendingMovies.length > 0) && (
                         <div className="w-full mt-4 pt-8 border-t border-white/10">
                           <h3 className="text-xl font-bold text-white mb-6 text-left">You might also like...</h3>
-                          <ul className="grid grid-cols-1 gap-5 xs:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+                          <ul>
                             {(searchSuggestions.length > 0 ? searchSuggestions : trendingMovies).slice(0, 4).map((movie, index) => (
                               <MovieCard
                                 key={movie.id}
