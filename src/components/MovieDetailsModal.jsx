@@ -226,7 +226,12 @@ const MovieDetailsModal = ({ movie, onClose, isFavorite, toggleFavorite, onSelec
 
   const handleCineHD = () => {
     const title = encodeURIComponent(movie.title || movie.name);
-    window.open(`https://cinehd.app/?s=${title}`, '_blank');
+    window.open(`https://cinehd.app/search?q=${title}`, '_blank');
+  };
+
+  const handleM4uhd = () => {
+    const title = encodeURIComponent(movie.title || movie.name);
+    window.open(`https://m4uhd.cx/watch/${title}`, '_blank');
   };
 
   const primaryButtonText = "Watch on Nkiri";
@@ -492,6 +497,13 @@ const MovieDetailsModal = ({ movie, onClose, isFavorite, toggleFavorite, onSelec
                                 className="w-full py-3 px-6 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-bold rounded-lg shadow-lg transform transition hover:scale-[1.02] flex items-center justify-center gap-2"
                               >
                                 Watch on CineHD
+                              </button>
+
+                              <button
+                                onClick={handleM4uhd}
+                                className="w-full py-3 px-6 bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-700 hover:to-amber-700 text-white font-bold rounded-lg shadow-lg transform transition hover:scale-[1.02] flex items-center justify-center gap-2"
+                              >
+                                Watch on M4UHD
                               </button>
                             </>
                           ) : (
