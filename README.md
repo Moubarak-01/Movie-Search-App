@@ -84,9 +84,14 @@ Click any movie or show to reveal a feature-rich modal with smooth layout transi
 
 ### 📱 Responsive & Adaptive UI
 The app adapts its navigation based on the device:
+- **Mobile Perfection**: Floating bottom navigation bar, smart bottom-sheet modals, responsive search placeholders, and automatically switching carousel images (from wide backdrops to tall posters) to perfectly fill phone screens.
 - **Dynamic Tooltips**: Hover cards calculate screen boundaries to never get cut off by the browser window.
-- **Mobile**: Sticky Bottom Navigation Bar (Home, Search, Favorites) and swipe-to-dismiss modals.
-- **Desktop**: Sleek Top Navigation menu.
+- **Desktop**: Sleek top navigation menu and immersive cinematic carousel.
+
+### 🎛️ Advanced Filtering
+- **Multi-Genre Selection**: A dedicated filter menu that instantly replaces the hero and trending sections with a dedicated results grid.
+- **Rating Slider**: Fine-tune your discovery by finding highly-rated gems.
+- **Instant Apply/Reset**: Intuitive UI that immediately updates the content grid as you interact.
 
 ---
 
