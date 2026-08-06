@@ -4,6 +4,7 @@ import { getGenreNames } from '../utils.js';
 
 const MovieCard = ({ movie, onClick, isFavorite, toggleFavorite, index = 0 }) => {
   const [isHovered, setIsHovered] = useState(false);
+  const [isImageLoaded, setIsImageLoaded] = useState(false);
   const hoverTimeoutRef = useRef(null);
   const cardRef = useRef(null);
   const [hoverStyle, setHoverStyle] = useState({ transformOrigin: 'center center', left: '-10%', top: '-10%' });
@@ -84,14 +85,20 @@ const MovieCard = ({ movie, onClick, isFavorite, toggleFavorite, index = 0 }) =>
       ref={cardRef}
       initial={{ opacity: 0, y: 20, scale: 0.95 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
-      transition={{ duration: 0.4, type: 'spring', bounce: 0.3, delay: index * 0.05 }}
+      transition={{ duration: 0.4, type: 'spring', bounce: 0.3, delay: (index % 20) * 0.05 }}
     >
-      <img
-        src={movie.poster_path ? `https://image.tmdb.org/t/p/w500/${movie.poster_path}` : '/no-movie.png'}
-        alt={title}
-        loading="lazy"
-        className="w-full h-auto rounded-lg"
-      />
+      <div className="relative w-full aspect-[2/3] rounded-lg overflow-hidden">
+        {!isImageLoaded && (
+          <div className="absolute inset-0 bg-gray-700/50 animate-pulse"></div>
+        )}
+        <img
+          src={movie.poster_path ? `https://image.tmdb.org/t/p/w500/${movie.poster_path}` : '/no-movie.png'}
+          alt={title}
+          loading="lazy"
+          onLoad={() => setIsImageLoaded(true)}
+          className={`w-full h-full object-cover transition-opacity duration-300 ${isImageLoaded ? 'opacity-100' : 'opacity-0'}`}
+        />
+      </div>
 
       {/* Favorite Button (Standard Card) */}
       <button
@@ -120,7 +127,7 @@ const MovieCard = ({ movie, onClick, isFavorite, toggleFavorite, index = 0 }) =>
         </svg>
       </button>
 
-      <div className="mt-4">
+      <div className="hidden md:block mt-4">
         <h3 className="text-white font-bold text-base line-clamp-1">{title}</h3>
 
         <div className="content mt-2 flex flex-row items-center flex-wrap gap-2">

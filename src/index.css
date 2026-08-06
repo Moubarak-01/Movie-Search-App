@@ -143,24 +143,21 @@
     @apply space-y-9;
 
     & ul {
-      @apply grid grid-cols-1 gap-5 xs:grid-cols-2 md:grid-cols-3 lg:grid-cols-4;
+      @apply grid grid-cols-2 gap-3 xs:grid-cols-3 md:grid-cols-4 lg:grid-cols-5;
 
       /* Mobile: Larger gaps for better touch targets */
       @media (max-width: 768px) {
-        gap: 1.25rem;
-        /* 20px */
+        gap: 0.75rem;
       }
     }
   }
 
   .movie-card {
-    @apply bg-dark-100 p-5 rounded-2xl shadow-inner shadow-light-100/10;
+    @apply bg-dark-100 p-2 md:p-5 rounded-2xl shadow-inner shadow-light-100/10;
 
     /* Mobile: Ensure minimum touch target size */
     @media (max-width: 768px) {
-      min-height: 280px;
-      padding: 1.25rem;
-      /* Slightly larger padding */
+      padding: 0.5rem;
     }
 
     & img {

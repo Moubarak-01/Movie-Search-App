@@ -12,12 +12,19 @@ const Search = ({ searchTerm, setSearchTerm, isSearching, onSubmit }) => {
       <div>
         <img src="/search.svg" alt="search" />
 
+        {!searchTerm && (
+          <div className="absolute left-10 right-10 pointer-events-none text-light-200 text-sm opacity-80 leading-tight md:text-base md:leading-normal">
+            <span className="block sm:hidden text-[11px]">Search for Movies, Series & Animes here...<br/>can't download em though😓😓 but I gat YOU</span>
+            <span className="hidden sm:block">Search for Movies, Series & Animes here... can't download em though😓😓 but I gat YOU</span>
+          </div>
+        )}
+
         <input
           type="text"
-          placeholder="Search for Movies, Series & Animes here... can't download em though😓😓 but I gat YOU"
           value={searchTerm}
           onChange={(event) => setSearchTerm(event.target.value)}
           onKeyDown={handleKeyDown}
+          className="relative z-10"
         />
 
         {isSearching && (

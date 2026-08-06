@@ -109,6 +109,8 @@ const FilterMenu = ({ isOpen, onClose, onApplyFilters }) => {
                                 onClick={() => {
                                     setSelectedGenres([]);
                                     setMinRating(0);
+                                    onApplyFilters({ genres: [], minRating: 0 });
+                                    onClose();
                                 }}
                                 className="flex-1 py-3 px-4 bg-gray-800 text-gray-300 font-bold rounded-xl hover:bg-gray-700 transition"
                             >

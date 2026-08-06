@@ -41,6 +41,9 @@ const App = () => {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [filters, setFilters] = useState({ genres: [], minRating: 0 });
   const [searchSuggestions, setSearchSuggestions] = useState([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [hasMore, setHasMore] = useState(false);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
 
   // Custom Hooks
   const { favorites, addFavorite, removeFavorite, isFavorite } = useFavorites();
@@ -48,7 +51,8 @@ const App = () => {
 
   useDebounce(() => setDebouncedSearchTerm(searchTerm), 2200, [searchTerm])
 
-  const isSearching = isLoading;
+  const isFilterActive = filters.genres.length > 0 || filters.minRating > 0;
+  const isSearching = isLoading && searchTerm !== '';
 
   // Handle Scroll to Section
   const handleTabChange = (tabId) => {
@@ -78,39 +82,82 @@ const App = () => {
     addToHistory(movie);
   };
 
-  const fetchMovies = async (query = '') => {
-    setIsLoading(true);
-    setErrorMessage('');
+  const fetchMovies = async (query = '', page = 1, isLoadMore = false) => {
+    if (isLoadMore) {
+      setIsLoadingMore(true);
+    } else {
+      setIsLoading(true);
+      setErrorMessage('');
+    }
+
+    // Artificial delay to ensure skeletons stay visible long enough for a smooth visual transition
+    // rather than flashing and vanishing instantly on fast networks.
+    await new Promise(resolve => setTimeout(resolve, 800));
 
     try {
-      // Use search/multi to search movies and TV shows, use trending/all/week when no query
-      const endpoint = query
-        ? `${API_BASE_URL}/search/multi?api_key=${API_KEY}&query=${encodeURIComponent(query)}`
-        : `${API_BASE_URL}/trending/all/week?api_key=${API_KEY}`;
+      let results = [];
+      let totalPages = 1;
 
-      const response = await fetch(endpoint, API_OPTIONS);
+      if (filters.genres.length > 0 && !query) {
+        const genreParams = filters.genres.join(',');
+        
+        const movieEndpoint = `${API_BASE_URL}/discover/movie?api_key=${API_KEY}&with_genres=${genreParams}&sort_by=popularity.desc&page=${page}&vote_average.gte=${filters.minRating}`;
+        const movieResp = await fetch(movieEndpoint, API_OPTIONS);
+        
+        const tvEndpoint = `${API_BASE_URL}/discover/tv?api_key=${API_KEY}&with_genres=${genreParams}&sort_by=popularity.desc&page=${page}&vote_average.gte=${filters.minRating}`;
+        const tvResp = await fetch(tvEndpoint, API_OPTIONS);
 
-      if (!response.ok) {
-        throw new Error('Failed to fetch movies');
+        if (!movieResp.ok || !tvResp.ok) throw new Error('Failed to fetch filtered movies');
+
+        const movieData = await movieResp.json();
+        const tvData = await tvResp.json();
+
+        results = [...(movieData.results || []), ...(tvData.results || [])];
+        results.sort((a, b) => (b.popularity || 0) - (a.popularity || 0));
+        
+        totalPages = Math.max(movieData.total_pages || 1, tvData.total_pages || 1);
+      } else {
+        const endpoint = query
+          ? `${API_BASE_URL}/search/multi?api_key=${API_KEY}&query=${encodeURIComponent(query)}&page=${page}`
+          : `${API_BASE_URL}/trending/all/week?api_key=${API_KEY}&page=${page}`;
+
+        const response = await fetch(endpoint, API_OPTIONS);
+
+        if (!response.ok) throw new Error('Failed to fetch movies');
+
+        const data = await response.json();
+        if (data.Response === 'False') {
+           if (!isLoadMore) {
+             setErrorMessage(data.Error || 'Failed to fetch movies');
+             setMovieList([]);
+           }
+           return;
+        }
+        results = data.results || [];
+        totalPages = data.total_pages || 1;
       }
 
-      const data = await response.json();
+      const validResults = results.filter(item => item.media_type !== 'person');
+      const finalResults = (filters.genres.length > 0 && !query) 
+        ? validResults 
+        : validResults.filter(movie => (movie.vote_average || 0) >= filters.minRating);
 
-      if (data.Response === 'False') {
-        setErrorMessage(data.Error || 'Failed to fetch movies');
-        setMovieList([]);
-        return;
+      if (isLoadMore) {
+        setMovieList(prev => {
+          const existingIds = new Set(prev.map(p => p.id));
+          const newItems = finalResults.filter(item => !existingIds.has(item.id));
+          return [...prev, ...newItems];
+        });
+      } else {
+        setMovieList(finalResults);
       }
+      
+      setHasMore(page < totalPages && page < 500);
 
-      // Filter out people from multi search
-      const filteredResults = (data.results || []).filter(item => item.media_type !== 'person');
-      setMovieList(filteredResults);
-
-      if (query && filteredResults.length > 0) {
-        await updateSearchCount(query, filteredResults[0]);
+      if (query && finalResults.length > 0 && !isLoadMore) {
+        await updateSearchCount(query, finalResults[0]);
         setSearchSuggestions([]);
-      } else if (query && filteredResults.length === 0) {
-        // Try a broader search to get related suggestions (e.g. Ben 10000 -> Ben, supermens -> Super)
+      } else if (query && finalResults.length === 0 && !isLoadMore) {
         const words = query.trim().split(' ');
         const backupQuery = words.length > 1 ? words[0] : query.substring(0, Math.min(query.length - 1, 5));
         
@@ -120,8 +167,7 @@ const App = () => {
             const backupResp = await fetch(backupEndpoint, API_OPTIONS);
             if (backupResp.ok) {
               const backupData = await backupResp.json();
-              const validBackup = (backupData.results || []).filter(item => item.media_type !== 'person');
-              setSearchSuggestions(validBackup);
+              setSearchSuggestions((backupData.results || []).filter(item => item.media_type !== 'person'));
             }
           } catch (e) {
             console.error("Backup search failed", e);
@@ -129,16 +175,27 @@ const App = () => {
         } else {
           setSearchSuggestions([]);
         }
-      } else {
+      } else if (!isLoadMore) {
         setSearchSuggestions([]);
       }
     } catch (error) {
       console.error(`Error fetching movies: ${error}`);
-      setErrorMessage('Error fetching movies. Please try again later.');
+      if (!isLoadMore) setErrorMessage('Error fetching movies. Please try again later.');
     } finally {
-      setIsLoading(false);
+      if (isLoadMore) {
+        setIsLoadingMore(false);
+      } else {
+        setIsLoading(false);
+      }
     }
   }
+
+  const handleLoadMore = () => {
+    if (!hasMore) return;
+    const nextPage = currentPage + 1;
+    setCurrentPage(nextPage);
+    fetchMovies(debouncedSearchTerm, nextPage, true);
+  };
 
   // --- TRENDING LOGIC ---
   const loadTrendingMovies = async () => {
@@ -276,8 +333,9 @@ const App = () => {
   }
 
   useEffect(() => {
-    fetchMovies(debouncedSearchTerm);
-  }, [debouncedSearchTerm]);
+    setCurrentPage(1);
+    fetchMovies(debouncedSearchTerm, 1, false);
+  }, [debouncedSearchTerm, filters]);
 
   useEffect(() => {
     loadTrendingMovies();
@@ -297,7 +355,7 @@ const App = () => {
   const { isRefreshing, pullChange } = usePullToRefresh(handleRefresh);
 
   return (
-    <main>
+    <main className="pb-32 md:pb-12">
       {/* Pull to Refresh Indicator */}
       <div
         className="fixed top-0 left-0 right-0 z-50 flex justify-center pointer-events-none transition-transform duration-75"
@@ -333,6 +391,15 @@ const App = () => {
             >
               Favorites
             </button>
+            <button
+              onClick={() => setIsFilterOpen(true)}
+              className="flex items-center gap-2 text-lg font-medium text-gray-400 hover:text-white transition-colors"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 11-3 0m3 0a1.5 1.5 0 10-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-9.75 0h9.75" />
+              </svg>
+              Filter
+            </button>
           </nav>
         </header>
 
@@ -357,19 +424,20 @@ const App = () => {
             }
           };
 
+          // Take the top 10 from each category (max 30 total items)
           for (let i = 0; i < 10; i++) {
             addUnique(trendingMovies[i]);
             addUnique(trendingSeries[i]);
             addUnique(trendingAnime[i]);
           }
           
-          return activeTab === 'home' && !searchTerm && combinedTrending.length > 0 && (
+          return activeTab === 'home' && !searchTerm && !isFilterActive && combinedTrending.length > 0 && (
             <HeroCarousel items={combinedTrending} onClick={handleMovieClick} />
           );
         })()}
 
-        {activeTab === 'home' && !searchTerm && trendingMovies.length > 0 && (
-          <section className="trending" id="trending">
+        {activeTab === 'home' && !searchTerm && !isFilterActive && trendingMovies.length > 0 && (
+          <section className="trending mt-6" id="trending-movies">
             <h2>Trending Movies</h2>
             <ul>
               {trendingMovies.map((movie, index) => (
@@ -386,7 +454,7 @@ const App = () => {
           </section>
         )}
 
-        {activeTab === 'home' && !searchTerm && trendingSeries.length > 0 && (
+        {activeTab === 'home' && !searchTerm && !isFilterActive && trendingSeries.length > 0 && (
           <section className="trending mt-6" id="trending-series">
             <h2>Trending Series</h2>
             <ul>
@@ -404,7 +472,7 @@ const App = () => {
           </section>
         )}
 
-        {activeTab === 'home' && !searchTerm && trendingAnime.length > 0 && (
+        {activeTab === 'home' && !searchTerm && !isFilterActive && trendingAnime.length > 0 && (
           <section className="trending mt-6" id="trending-anime">
             <h2>Trending Animes</h2>
             <ul>
@@ -422,7 +490,29 @@ const App = () => {
           </section>
         )}
 
-        <section className="all-movies mt-6" id="all-movies">
+        {activeTab === 'trending' && (
+          <section className="all-movies mt-6" id="trending-grid">
+            <h2>All Trending Shows</h2>
+            <ul>
+              {(() => {
+                const combined = [];
+                const seen = new Set();
+                [...trendingMovies, ...trendingSeries, ...trendingAnime].forEach(item => {
+                  if (item && !seen.has(item.id)) {
+                    seen.add(item.id);
+                    combined.push(item);
+                  }
+                });
+                return combined.map((item, index) => (
+                  <MovieCard key={item.id} movie={item} index={index} onClick={handleMovieClick} isFavorite={isFavorite(item.id)} toggleFavorite={toggleFavorite} />
+                ));
+              })()}
+            </ul>
+          </section>
+        )}
+
+        {activeTab !== 'trending' && (
+          <section className="all-movies mt-6" id="all-movies">
           <h2>{activeTab === 'favorites' ? 'Your Favorites' : 'All Movies, Series & Animes'}</h2>
 
           {activeTab === 'favorites' && favorites.length === 0 ? (
@@ -431,7 +521,7 @@ const App = () => {
               <p className="text-sm">Heart some movies to see them here!</p>
             </div>
           ) : isLoading ? (
-            <ul className="grid grid-cols-1 gap-5 xs:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+            <ul>
               {Array.from({ length: 8 }).map((_, i) => (
                 <li key={i}>
                   <MovieCardSkeleton />
@@ -444,23 +534,9 @@ const App = () => {
             <>
               {(() => {
                 const filteredList = (activeTab === 'favorites' ? favorites : movieList).filter(movie => {
-                  // Text search filtering for favorites
                   if (activeTab === 'favorites' && searchTerm) {
                     const title = (movie.title || movie.name || '').toLowerCase();
                     if (!title.includes(searchTerm.toLowerCase())) return false;
-                  }
-
-                  if (activeTab === 'favorites') return true;
-
-                  // Filter by Genre
-                  if (filters.genres.length > 0) {
-                    const movieGenres = movie.genre_ids || [];
-                    const matchesGenre = filters.genres.some(id => movieGenres.includes(id));
-                    if (!matchesGenre) return false;
-                  }
-                  // Filter by Rating
-                  if (filters.minRating > 0) {
-                    if ((movie.vote_average || 0) < filters.minRating) return false;
                   }
                   return true;
                 });
@@ -497,23 +573,46 @@ const App = () => {
                 }
 
                 return (
-                  <ul>
-                    {filteredList.map((movie, index) => (
-                      <MovieCard
-                        key={movie.id}
-                        movie={movie}
-                        index={index}
-                        onClick={handleMovieClick}
-                        isFavorite={isFavorite(movie.id)}
-                        toggleFavorite={toggleFavorite}
-                      />
-                    ))}
-                  </ul>
+                  <>
+                    <ul>
+                      {filteredList.map((movie, index) => (
+                        <MovieCard
+                          key={movie.id}
+                          movie={movie}
+                          index={index}
+                          onClick={handleMovieClick}
+                          isFavorite={isFavorite(movie.id)}
+                          toggleFavorite={toggleFavorite}
+                        />
+                      ))}
+                      
+                      {isLoadingMore && Array.from({ length: 20 }).map((_, i) => (
+                        <li key={`skeleton-${i}`}>
+                          <MovieCardSkeleton />
+                        </li>
+                      ))}
+                    </ul>
+                    
+                    {activeTab !== 'favorites' && hasMore && !isLoadingMore && (
+                      <div className="w-full flex justify-center mt-10">
+                        <button 
+                          onClick={handleLoadMore}
+                          className="px-6 py-3 bg-white/10 hover:bg-white/20 text-white rounded-full font-semibold transition-all flex items-center gap-2 border border-white/20"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+                          </svg>
+                          See More
+                        </button>
+                      </div>
+                    )}
+                  </>
                 );
               })()}
             </>
           )}
         </section>
+        )}
 
         {selectedMovie && (
           <MovieDetailsModal

@@ -246,9 +246,9 @@ const MovieDetailsModal = ({ movie, onClose, isFavorite, toggleFavorite, onSelec
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm md:items-center items-end md:p-4 p-0" onClick={onClose}>
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 pb-24 bg-black/80 backdrop-blur-sm md:pb-4" onClick={onClose}>
         <motion.div
-          className="relative w-full max-w-4xl bg-[#1a1a1a] border border-gray-700 rounded-2xl md:rounded-2xl rounded-t-2xl rounded-b-none shadow-2xl overflow-hidden flex flex-col md:flex-row max-h-[90vh] md:max-h-[90vh] max-h-[95vh]"
+          className="relative w-full max-w-4xl bg-[#1a1a1a] border border-gray-700 rounded-2xl shadow-2xl overflow-hidden flex flex-col md:flex-row max-h-[85vh] md:max-h-[90vh]"
           onClick={(e) => e.stopPropagation()}
 
           // Animation Props
