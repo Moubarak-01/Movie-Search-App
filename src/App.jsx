@@ -394,10 +394,15 @@ const App = () => {
           ) : errorMessage ? (
             <p className="text-red-500">{errorMessage}</p>
           ) : (
-            <ul>
-              {(activeTab === 'favorites' ? favorites : movieList)
-                .filter(movie => {
-                  // Filter logic apply only for Home tab or if reusing filters for favs (optional, usually favs show all)
+            <>
+              {(() => {
+                const filteredList = (activeTab === 'favorites' ? favorites : movieList).filter(movie => {
+                  // Text search filtering for favorites
+                  if (activeTab === 'favorites' && searchTerm) {
+                    const title = (movie.title || movie.name || '').toLowerCase();
+                    if (!title.includes(searchTerm.toLowerCase())) return false;
+                  }
+
                   if (activeTab === 'favorites') return true;
 
                   // Filter by Genre
@@ -411,18 +416,34 @@ const App = () => {
                     if ((movie.vote_average || 0) < filters.minRating) return false;
                   }
                   return true;
-                })
-                .map((movie, index) => (
-                  <MovieCard
-                    key={movie.id}
-                    movie={movie}
-                    index={index}
-                    onClick={handleMovieClick}
-                    isFavorite={isFavorite(movie.id)}
-                    toggleFavorite={toggleFavorite}
-                  />
-                ))}
-            </ul>
+                });
+
+                if (filteredList.length === 0 && (searchTerm || filters.genres.length > 0 || filters.minRating > 0)) {
+                  return (
+                    <div className="text-center text-gray-400 py-20 w-full flex flex-col items-center justify-center">
+                      <p className="text-2xl font-bold text-white mb-2">Oops! No results found.</p>
+                      <p className="text-base max-w-md">We couldn't find any matches {searchTerm ? <span>for <span className="text-white font-medium">"{searchTerm}"</span></span> : "with the current filters"}.</p>
+                      <p className="text-sm mt-2 text-gray-500">Try adjusting your search, clearing filters, or checking for typos.</p>
+                    </div>
+                  );
+                }
+
+                return (
+                  <ul>
+                    {filteredList.map((movie, index) => (
+                      <MovieCard
+                        key={movie.id}
+                        movie={movie}
+                        index={index}
+                        onClick={handleMovieClick}
+                        isFavorite={isFavorite(movie.id)}
+                        toggleFavorite={toggleFavorite}
+                      />
+                    ))}
+                  </ul>
+                );
+              })()}
+            </>
           )}
         </section>
 

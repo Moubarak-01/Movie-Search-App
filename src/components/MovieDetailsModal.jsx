@@ -113,14 +113,16 @@ const MovieDetailsModal = ({ movie, onClose, isFavorite, toggleFavorite, onSelec
       return;
     }
 
-    const interval = setInterval(() => {
+    let interval;
+
+    const updateTime = () => {
       const now = new Date();
       const airDate = new Date(nextEpisodeAirstamp);
       const diffMs = airDate - now;
 
       if (diffMs <= 0) {
         setTimeLeft('Airing now or recently aired');
-        clearInterval(interval);
+        if (interval) clearInterval(interval);
         return;
       }
 
@@ -136,7 +138,10 @@ const MovieDetailsModal = ({ movie, onClose, isFavorite, toggleFavorite, onSelec
       parts.push(`${seconds}s`);
 
       setTimeLeft(parts.join(' '));
-    }, 1000);
+    };
+
+    updateTime(); // Update immediately so it doesn't flash the error message
+    interval = setInterval(updateTime, 1000);
 
     return () => clearInterval(interval);
   }, [nextEpisodeAirstamp]);
@@ -153,6 +158,9 @@ const MovieDetailsModal = ({ movie, onClose, isFavorite, toggleFavorite, onSelec
     
     setIsFetchingCountdown(true);
     try {
+      // Artificial delay to show skeleton loading as requested
+      await new Promise(resolve => setTimeout(resolve, 3500));
+
       const extResponse = await fetch(`${API_BASE_URL}/tv/${movie.id}/external_ids?api_key=${API_KEY}`);
       const extData = await extResponse.json();
       
@@ -410,7 +418,10 @@ const MovieDetailsModal = ({ movie, onClose, isFavorite, toggleFavorite, onSelec
                               {showCountdown && (
                                 <div className="bg-gray-900/50 p-3 rounded-lg border border-gray-700/50">
                                   {isFetchingCountdown ? (
-                                    <p className="text-gray-400 text-xs italic">Fetching exact time from network...</p>
+                                    <div className="animate-pulse flex flex-col gap-2 py-1">
+                                      <div className="h-2.5 bg-gray-600/50 rounded w-1/3"></div>
+                                      <div className="h-4 bg-gray-600/50 rounded w-1/2"></div>
+                                    </div>
                                   ) : timeLeft && nextEpisodeAirstamp ? (
                                     <>
                                       <p className="text-gray-400 text-[10px] uppercase tracking-wider mb-1">Starts in (Local Time)</p>
