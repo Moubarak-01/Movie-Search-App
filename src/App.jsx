@@ -145,11 +145,13 @@ const App = () => {
       if (isLoadMore) {
         setMovieList(prev => {
           const existingIds = new Set(prev.map(p => p.id));
-          const newItems = finalResults.filter(item => !existingIds.has(item.id));
+          const newItems = finalResults
+            .filter(item => !existingIds.has(item.id))
+            .map((item, i) => ({ ...item, batchIndex: i }));
           return [...prev, ...newItems];
         });
       } else {
-        setMovieList(finalResults);
+        setMovieList(finalResults.map((item, i) => ({ ...item, batchIndex: i })));
       }
       
       setHasMore(page < totalPages && page < 500);

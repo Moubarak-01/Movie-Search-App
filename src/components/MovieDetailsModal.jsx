@@ -191,14 +191,13 @@ const MovieDetailsModal = ({ movie, onClose, isFavorite, toggleFavorite, onSelec
     }
   };
 
-  // --- HANDLERS ---
   const handleNkiri = () => {
-    const title = encodeURIComponent(movie.title);
+    const title = encodeURIComponent(movie.title || movie.name);
     window.open(`https://thenkiri.com/?s=${title}`, '_blank');
   };
 
   const handleAnimeSuge = () => {
-    const title = encodeURIComponent(movie.title);
+    const title = encodeURIComponent(movie.title || movie.name);
     window.open(`https://animesuge.cz/filter?keyword=${title}`, '_blank');
   };
 

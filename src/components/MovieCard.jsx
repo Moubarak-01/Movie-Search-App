@@ -85,7 +85,7 @@ const MovieCard = ({ movie, onClick, isFavorite, toggleFavorite, index = 0 }) =>
       ref={cardRef}
       initial={{ opacity: 0, y: 20, scale: 0.95 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
-      transition={{ duration: 0.4, type: 'spring', bounce: 0.3, delay: (index % 20) * 0.05 }}
+      transition={{ duration: 0.4, type: 'spring', bounce: 0.3, delay: ((movie.batchIndex !== undefined ? movie.batchIndex : index) % 20) * 0.05 }}
     >
       <div className="relative w-full aspect-[2/3] rounded-lg overflow-hidden">
         {!isImageLoaded && (
@@ -94,7 +94,6 @@ const MovieCard = ({ movie, onClick, isFavorite, toggleFavorite, index = 0 }) =>
         <img
           src={movie.poster_path ? `https://image.tmdb.org/t/p/w500/${movie.poster_path}` : '/no-movie.png'}
           alt={title}
-          loading="lazy"
           onLoad={() => setIsImageLoaded(true)}
           className={`w-full h-full object-cover transition-opacity duration-300 ${isImageLoaded ? 'opacity-100' : 'opacity-0'}`}
         />
