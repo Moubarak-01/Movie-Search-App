@@ -147,7 +147,7 @@ const Search = ({ searchTerm, setSearchTerm, isSearching, onSubmit, onFilterClic
         <img src="/search.svg" alt="search" />
 
         {!searchTerm && (
-          <div className="absolute left-10 right-32 pointer-events-none text-light-200 text-xs sm:text-sm opacity-80 leading-tight md:text-base md:leading-normal truncate">
+          <div className="absolute left-10 right-[80px] md:right-[230px] pointer-events-none text-light-200 text-xs sm:text-sm opacity-80 leading-tight md:text-base md:leading-normal">
             <span>{placeholder}</span>
             <span className="animate-pulse font-light ml-0.5">|</span>
           </div>
@@ -158,12 +158,12 @@ const Search = ({ searchTerm, setSearchTerm, isSearching, onSubmit, onFilterClic
           value={searchTerm}
           onChange={(event) => setSearchTerm(event.target.value)}
           onKeyDown={handleKeyDown}
-          className="relative z-10 pr-32"
+          className="relative z-10 pr-[80px] md:pr-[230px] text-sm md:text-base"
         />
 
         <div className="absolute right-4 top-1/2 transform -translate-y-1/2 flex items-center gap-3 z-20">
           {onFilterClick && (
-            <button 
+            <button
               onClick={onFilterClick}
               className="hidden md:flex items-center gap-1.5 px-3 py-1.5 bg-light-100/10 hover:bg-light-100/20 text-gray-300 hover:text-white rounded-full transition-colors text-sm font-medium mr-1"
               title="Filter"
@@ -184,7 +184,7 @@ const Search = ({ searchTerm, setSearchTerm, isSearching, onSubmit, onFilterClic
           )}
 
           {searchTerm && (
-            <button 
+            <button
               onClick={() => setSearchTerm('')}
               className="text-gray-400 hover:text-white transition-colors bg-light-100/10 hover:bg-light-100/20 rounded-full p-1"
               title="Clear search"

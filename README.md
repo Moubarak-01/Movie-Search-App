@@ -89,9 +89,14 @@ The app adapts its navigation based on the device:
 - **Desktop**: Sleek top navigation menu and immersive cinematic carousel.
 
 ### 🎛️ Advanced Filtering
-- **Multi-Genre Selection**: A dedicated filter menu that instantly replaces the hero and trending sections with a dedicated results grid.
+- **Expansive Wide Modal**: A visually stunning, center-scaled filter menu that provides a massive grid of **27 different genres** (from Action to Reality TV), designed precisely like premium VOD platforms.
 - **Rating Slider**: Fine-tune your discovery by finding highly-rated gems.
 - **Instant Apply/Reset**: Intuitive UI that immediately updates the content grid as you interact.
+
+### ✨ Polish & UX
+- **Intelligent Typo-Tolerance**: Advanced fallback search logic that automatically extracts, sorts by length, and tests the most unique words from your query if the initial search fails (e.g. finds *Cyberpunk: Edgerunners* even if you type *"cyberpuk edgerunners"*).
+- **Custom Typewriter Prompts**: A bespoke, zero-dependency React hook cycling through 100+ funny, clever, and helpful search prompts.
+- **Pixel-Perfect Padding**: Precision-engineered search bar constraints that prevent text collision with UI elements across both mobile and desktop views without breaking native scroll behaviors.
 
 ---
 

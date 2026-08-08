@@ -160,20 +160,33 @@ const App = () => {
         await updateSearchCount(query, finalResults[0]);
         setSearchSuggestions([]);
       } else if (query && finalResults.length === 0 && !isLoadMore) {
-        const words = query.trim().split(' ');
-        const backupQuery = words.length > 1 ? words[0] : query.substring(0, Math.min(query.length - 1, 5));
+        // Advanced Fallback Logic for Typo Tolerance
+        const words = query.trim().split(/\s+/).filter(w => w.length > 2);
         
-        if (backupQuery && backupQuery.length >= 3) {
+        // Sort words by length descending to find the most unique/identifying word
+        const sortedWords = [...words].sort((a, b) => b.length - a.length);
+        
+        let backupResults = [];
+        
+        // Try searching the longest words first, one by one until we get results
+        for (const word of sortedWords) {
           try {
-            const backupEndpoint = `${API_BASE_URL}/search/multi?api_key=${API_KEY}&query=${encodeURIComponent(backupQuery)}`;
+            const backupEndpoint = `${API_BASE_URL}/search/multi?api_key=${API_KEY}&query=${encodeURIComponent(word)}`;
             const backupResp = await fetch(backupEndpoint, API_OPTIONS);
             if (backupResp.ok) {
               const backupData = await backupResp.json();
-              setSearchSuggestions((backupData.results || []).filter(item => item.media_type !== 'person'));
+              if (backupData.results && backupData.results.length > 0) {
+                backupResults = backupData.results.filter(item => item.media_type !== 'person');
+                break; // Stop looking once we find something!
+              }
             }
           } catch (e) {
             console.error("Backup search failed", e);
           }
+        }
+        
+        if (backupResults.length > 0) {
+          setSearchSuggestions(backupResults);
         } else {
           setSearchSuggestions([]);
         }
@@ -228,7 +241,8 @@ const App = () => {
             popularity: m.popularity,
             genre_ids: m.genre_ids, // <--- ADDED THIS so we can detect Anime in Trending
             name: m.name, // Pass name for TV shows
-            first_air_date: m.first_air_date
+            first_air_date: m.first_air_date,
+            media_type: m.media_type || 'movie'
           }));
         }
       }
@@ -264,7 +278,8 @@ const App = () => {
           popularity: m.popularity,
           genre_ids: m.genre_ids,
           name: m.name,
-          first_air_date: m.first_air_date
+          first_air_date: m.first_air_date,
+          media_type: m.media_type || 'tv'
         }));
         setTrendingSeries(series);
       }
