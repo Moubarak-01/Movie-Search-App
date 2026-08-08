@@ -392,9 +392,9 @@ const App = () => {
 
       <div className="pattern" />
       <div className="wrapper">
-        <header className="w-full flex justify-between items-center px-8 py-4 z-50">
+        <header className="w-full flex justify-between items-center px-4 md:px-8 py-0 md:py-4 z-50">
           <div className="flex items-center gap-3">
-            <img src="/mouvie-logo-removebg-preview.png" alt="Mouvie Logo" className="h-56 w-auto object-contain" />
+            <img src="/mouvie-logo-removebg-preview.png" alt="Mouvie Logo" className="w-32 md:w-44 h-auto object-contain -my-6 md:my-0" />
           </div>
           <nav className="hidden md:flex items-center gap-6">
             <button
@@ -447,7 +447,7 @@ const App = () => {
         })()}
 
         {activeTab === 'home' && !searchTerm && !isFilterActive && trendingMovies.length > 0 && (
-          <section className="trending mt-6" id="trending-movies">
+          <section className="trending mt-6 hidden md:block" id="trending-movies">
             <h2>Trending Movies</h2>
             <ul>
               {trendingMovies.map((movie, index) => (
@@ -465,7 +465,7 @@ const App = () => {
         )}
 
         {activeTab === 'home' && !searchTerm && !isFilterActive && trendingSeries.length > 0 && (
-          <section className="trending mt-6" id="trending-series">
+          <section className="trending mt-6 hidden md:block" id="trending-series">
             <h2>Trending Series</h2>
             <ul>
               {trendingSeries.map((series, index) => (
@@ -483,7 +483,7 @@ const App = () => {
         )}
 
         {activeTab === 'home' && !searchTerm && !isFilterActive && trendingAnime.length > 0 && (
-          <section className="trending mt-6" id="trending-anime">
+          <section className="trending mt-6 hidden md:block" id="trending-anime">
             <h2>Trending Animes</h2>
             <ul>
               {trendingAnime.map((anime, index) => (
@@ -499,6 +499,48 @@ const App = () => {
             </ul>
           </section>
         )}
+
+        {/* Mobile-only Combined Trending Section */}
+        {(() => {
+          if (!(activeTab === 'home' && !searchTerm && !isFilterActive)) return null;
+          
+          const combinedMobileTrending = [];
+          const seenIdsMobile = new Set();
+          
+          const addUniqueMobile = (item) => {
+            if (item && !seenIdsMobile.has(item.id)) {
+              seenIdsMobile.add(item.id);
+              combinedMobileTrending.push(item);
+            }
+          };
+
+          // Collect top 20 items by interleaving
+          for (let i = 0; i < 7; i++) {
+            addUniqueMobile(trendingMovies[i]);
+            addUniqueMobile(trendingSeries[i]);
+            addUniqueMobile(trendingAnime[i]);
+          }
+          
+          if (combinedMobileTrending.length === 0) return null;
+          
+          return (
+            <section className="trending mt-6 md:hidden block" id="trending-mobile">
+              <h2>Trending Shows</h2>
+              <ul>
+                {combinedMobileTrending.slice(0, 20).map((item, index) => (
+                  <TrendingCard
+                    key={item.$id || index}
+                    item={item}
+                    index={index}
+                    onClick={handleMovieClick}
+                    isFavorite={isFavorite(item.id)}
+                    toggleFavorite={toggleFavorite}
+                  />
+                ))}
+              </ul>
+            </section>
+          );
+        })()}
 
         {activeTab === 'trending' && (
           <section className="all-movies mt-6" id="trending-grid">

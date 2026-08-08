@@ -51,7 +51,7 @@ const HeroCarousel = ({ items, onClick }) => {
   const releaseYear = (currentItem.release_date || currentItem.first_air_date || '').split('-')[0];
 
   return (
-    <div className="relative w-full h-[65vh] min-h-[450px] sm:h-[80vh] sm:min-h-[600px] max-h-[900px] rounded-2xl overflow-hidden mt-6 mb-12 shadow-2xl group">
+    <div className="relative w-full h-[48vh] min-h-[300px] sm:h-[80vh] sm:min-h-[600px] max-h-[900px] rounded-2xl overflow-hidden mt-4 md:mt-6 mb-12 shadow-2xl group">
       {/* Background Images with Crossfade */}
       {items.map((item, index) => {
         // Mobile uses poster (portrait), Desktop uses backdrop (landscape)

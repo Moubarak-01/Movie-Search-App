@@ -86,8 +86,10 @@ Click any movie or show to reveal a feature-rich modal with smooth layout transi
 ### 📱 Responsive & Adaptive UI
 The app adapts its navigation based on the device:
 - **Mobile Perfection**: Floating bottom navigation bar, smart bottom-sheet modals, responsive search placeholders, and automatically switching carousel images (from wide backdrops to tall posters) to perfectly fill phone screens.
+- **Viewport Optimization**: Aggressive padding reduction and negative margins on mobile ensure the Hero Carousel poster fits perfectly "above the fold" without any scrolling required.
+- **Unified Mobile Trending**: Combines the top 20 Movies, Series, and Anime into a single interleaved "Trending Shows" section specifically for mobile users to save vertical space.
 - **Dynamic Tooltips**: Hover cards calculate screen boundaries to never get cut off by the browser window.
-- **Desktop**: Sleek top navigation menu and immersive cinematic carousel.
+- **Desktop**: Sleek top navigation menu, distinct trending categories, and an immersive cinematic carousel.
 
 ### 🎛️ Advanced Filtering
 - **Expansive Wide Modal**: A visually stunning, center-scaled filter menu that provides a massive grid of **27 different genres** (from Action to Reality TV), designed precisely like premium VOD platforms.
