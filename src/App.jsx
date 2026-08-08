@@ -350,9 +350,10 @@ const App = () => {
   }
 
   useEffect(() => {
+    if (activeTab === 'favorites') return;
     setCurrentPage(1);
     fetchMovies(debouncedSearchTerm, 1, false);
-  }, [debouncedSearchTerm, filters]);
+  }, [debouncedSearchTerm, filters, activeTab]);
 
   useEffect(() => {
     loadTrendingMovies();

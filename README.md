@@ -79,6 +79,7 @@ Click any movie or show to reveal a feature-rich modal with smooth layout transi
 
 ### 👤 Personalization
 - **Favorites System**: Heart (<3) any movie to save it to your personal "Favorites" list.
+- **Instant Local Search**: The search bar instantly filters your saved favorites in real-time without triggering network requests or loading spinners.
 - **Watch History**: Automatically tracks the last 20 movies you've viewed.
 - **Persisted Data**: Your data is saved via `localStorage`, so it's there when you return.
 
@@ -162,6 +163,6 @@ Distributed under the MIT License. See `LICENSE` for more information.
 
 ## 🙏 Acknowledgments
 
-- **TMDB API** for the incredible movie database.
+- **TMDB API** for the incredible movie/anime/series database.
 - **Appwrite** for the seamless backend integration.
-- **AnimeSuge, HiAnime & Nkiri** for streaming capabilities.
+- **AnimeSuge, HiAnime, Net77, CineHD & Nkiri** for streaming capabilities.
