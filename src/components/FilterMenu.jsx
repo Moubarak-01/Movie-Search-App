@@ -7,18 +7,32 @@ const FilterMenu = ({ isOpen, onClose, onApplyFilters }) => {
 
     const genres = [
         { id: 28, name: "Action" },
+        { id: 10759, name: "Action & Adventure" },
         { id: 12, name: "Adventure" },
         { id: 16, name: "Animation" },
         { id: 35, name: "Comedy" },
         { id: 80, name: "Crime" },
+        { id: 99, name: "Documentary" },
         { id: 18, name: "Drama" },
         { id: 10751, name: "Family" },
         { id: 14, name: "Fantasy" },
+        { id: 36, name: "History" },
         { id: 27, name: "Horror" },
+        { id: 10762, name: "Kids" },
+        { id: 10402, name: "Music" },
         { id: 9648, name: "Mystery" },
+        { id: 10763, name: "News" },
+        { id: 10764, name: "Reality" },
         { id: 10749, name: "Romance" },
         { id: 878, name: "Sci-Fi" },
+        { id: 10765, name: "Sci-Fi & Fantasy" },
+        { id: 10766, name: "Soap" },
+        { id: 10767, name: "Talk" },
         { id: 53, name: "Thriller" },
+        { id: 10770, name: "TV Movie" },
+        { id: 10752, name: "War" },
+        { id: 10768, name: "War & Politics" },
+        { id: 37, name: "Western" }
     ];
 
     const toggleGenre = (id) => {
@@ -47,15 +61,15 @@ const FilterMenu = ({ isOpen, onClose, onApplyFilters }) => {
 
                     {/* Filter Panel */}
                     <motion.div
-                        initial={{ x: "100%" }}
-                        animate={{ x: 0 }}
-                        exit={{ x: "100%" }}
+                        initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                        exit={{ opacity: 0, scale: 0.95, y: 20 }}
                         transition={{ type: "spring", damping: 25, stiffness: 300 }}
-                        className="fixed inset-y-0 right-0 w-[85vw] max-w-sm bg-[#1a1a1a] border-l border-gray-800 z-50 p-6 shadow-2xl overflow-y-auto"
+                        className="fixed inset-x-4 bottom-4 top-20 md:inset-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-[90vw] md:max-w-5xl bg-[#141414] border border-gray-800 rounded-3xl z-50 p-6 md:p-10 shadow-2xl overflow-y-auto"
                     >
-                        <div className="flex justify-between items-center mb-8">
-                            <h2 className="text-2xl font-bold text-white">Filters</h2>
-                            <button onClick={onClose} className="p-2 text-gray-400 hover:text-white">
+                        <div className="flex justify-between items-center mb-8 border-b border-gray-800 pb-4">
+                            <h2 className="text-2xl md:text-3xl font-bold text-white">Advanced Filters</h2>
+                            <button onClick={onClose} className="p-2 bg-gray-800/50 rounded-full text-gray-400 hover:text-white hover:bg-gray-700 transition">
                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-6 h-6">
                                     <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
                                 </svg>
