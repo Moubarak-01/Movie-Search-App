@@ -241,6 +241,11 @@ const MovieDetailsModal = ({ movie, onClose, isFavorite, toggleFavorite, onSelec
     window.open(`https://m4uhd.cx/watch/${title}`, '_blank');
   };
 
+  const handleDulo = () => {
+    const title = encodeURIComponent(movie.title || movie.name);
+    window.open(`https://dulo.cx/?s=${title}`, '_blank');
+  };
+
   const primaryButtonText = "Watch on Nkiri";
 
   return (
@@ -487,6 +492,13 @@ const MovieDetailsModal = ({ movie, onClose, isFavorite, toggleFavorite, onSelec
                                   )}
                                 </>
                               )}
+
+                              <button
+                                onClick={handleDulo}
+                                className="w-full py-3 px-6 bg-gradient-to-r from-blue-700 to-indigo-800 hover:from-blue-800 hover:to-indigo-900 text-white font-bold rounded-lg shadow-lg transform transition hover:scale-[1.02] flex items-center justify-center gap-2"
+                              >
+                                Watch on Dulo (Movies, Series & Anime)
+                              </button>
 
                               <button
                                 onClick={handleNkiri}

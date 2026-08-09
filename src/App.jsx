@@ -412,7 +412,7 @@ const App = () => {
           </nav>
         </header>
 
-        <h1>Find <span className="text-gradient">Movies, Series & Animes</span> You will Enjoy Without too much Hassle</h1>
+        <h1>Find <span className="text-gradient">Movies, Series & Anime</span> You will Enjoy Without too much Hassle</h1>
         <section id="search">
           <Search
             searchTerm={searchTerm}
