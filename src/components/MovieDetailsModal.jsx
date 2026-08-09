@@ -497,7 +497,7 @@ const MovieDetailsModal = ({ movie, onClose, isFavorite, toggleFavorite, onSelec
                                 onClick={handleDulo}
                                 className="w-full py-3 px-6 bg-gradient-to-r from-blue-700 to-indigo-800 hover:from-blue-800 hover:to-indigo-900 text-white font-bold rounded-lg shadow-lg transform transition hover:scale-[1.02] flex items-center justify-center gap-2"
                               >
-                                Watch on Dulo (Movies, Series & Anime)
+                                Watch on Dulo
                               </button>
 
                               <button
