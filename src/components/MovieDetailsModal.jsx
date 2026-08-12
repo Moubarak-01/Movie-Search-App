@@ -246,6 +246,16 @@ const MovieDetailsModal = ({ movie, onClose, isFavorite, toggleFavorite, onSelec
     window.open(`https://dulo.cx/?s=${title}`, '_blank');
   };
 
+  const handleRedflix = () => {
+    const title = encodeURIComponent(movie.title || movie.name);
+    window.open(`https://redflix.club/?s=${title}`, '_blank');
+  };
+
+  const handlePrimeshows = () => {
+    const title = encodeURIComponent(movie.title || movie.name);
+    window.open(`https://primeshows.org/?s=${title}`, '_blank');
+  };
+
   const primaryButtonText = "Watch on Nkiri";
 
   return (
@@ -498,6 +508,20 @@ const MovieDetailsModal = ({ movie, onClose, isFavorite, toggleFavorite, onSelec
                                 className="w-full py-3 px-6 bg-gradient-to-r from-blue-700 to-indigo-800 hover:from-blue-800 hover:to-indigo-900 text-white font-bold rounded-lg shadow-lg transform transition hover:scale-[1.02] flex items-center justify-center gap-2"
                               >
                                 Watch on Dulo
+                              </button>
+
+                              <button
+                                onClick={handleRedflix}
+                                className="w-full py-3 px-6 bg-gradient-to-r from-red-700 to-red-900 hover:from-red-800 hover:to-red-950 text-white font-bold rounded-lg shadow-lg transform transition hover:scale-[1.02] flex items-center justify-center gap-2"
+                              >
+                                Watch on Redflix
+                              </button>
+
+                              <button
+                                onClick={handlePrimeshows}
+                                className="w-full py-3 px-6 bg-gradient-to-r from-yellow-600 to-amber-700 hover:from-yellow-700 hover:to-amber-800 text-white font-bold rounded-lg shadow-lg transform transition hover:scale-[1.02] flex items-center justify-center gap-2"
+                              >
+                                Watch on Primeshows
                               </button>
 
                               <button
