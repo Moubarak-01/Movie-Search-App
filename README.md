@@ -176,4 +176,4 @@ Distributed under the MIT License. See `LICENSE` for more information.
 
 - **TMDB API** for the incredible movie/anime/series database.
 - **Appwrite** for the seamless backend integration.
-- **AnimeSuge, HiAnime, Net77, CineHD & Nkiri** for streaming capabilities.
+- **Dulo, Redflix, Primeshows, NetShows, AnimeSuge, HiAnime, Net77, CineHD, M4UHD & Nkiri** for streaming capabilities.
