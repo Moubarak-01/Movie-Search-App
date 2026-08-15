@@ -258,7 +258,7 @@ const MovieDetailsModal = ({ movie, onClose, isFavorite, toggleFavorite, onSelec
 
   const handleNetshows = () => {
     const title = encodeURIComponent(movie.title || movie.name);
-    window.open(`https://netshows.xyz/?s=${title}`, '_blank');
+    window.open(`https://netshows.xyz/search?q=${title}`, '_blank');
   };
 
   const primaryButtonText = "Watch on Nkiri";
