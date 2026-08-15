@@ -256,6 +256,11 @@ const MovieDetailsModal = ({ movie, onClose, isFavorite, toggleFavorite, onSelec
     window.open(`https://primeshows.org/?s=${title}`, '_blank');
   };
 
+  const handleNetshows = () => {
+    const title = encodeURIComponent(movie.title || movie.name);
+    window.open(`https://netshows.xyz/?s=${title}`, '_blank');
+  };
+
   const primaryButtonText = "Watch on Nkiri";
 
   return (
@@ -522,6 +527,13 @@ const MovieDetailsModal = ({ movie, onClose, isFavorite, toggleFavorite, onSelec
                                 className="w-full py-3 px-6 bg-gradient-to-r from-yellow-600 to-amber-700 hover:from-yellow-700 hover:to-amber-800 text-white font-bold rounded-lg shadow-lg transform transition hover:scale-[1.02] flex items-center justify-center gap-2"
                               >
                                 Watch on Primeshows
+                              </button>
+
+                              <button
+                                onClick={handleNetshows}
+                                className="w-full py-3 px-6 bg-gradient-to-r from-fuchsia-600 to-pink-700 hover:from-fuchsia-700 hover:to-pink-800 text-white font-bold rounded-lg shadow-lg transform transition hover:scale-[1.02] flex items-center justify-center gap-2"
+                              >
+                                Watch on NetShows
                               </button>
 
                               <button

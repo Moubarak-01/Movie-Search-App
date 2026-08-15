@@ -68,10 +68,19 @@ Mouvie solves a common problem: finding where to watch your favorite movies and 
 - **Rich Metadata**: Displays posters, match percentages, release years, and languages.
 - **Loading States**: Shimmering skeletons for a perceived faster load time.
 
+### 🍿 Universal Streaming Integration
+Say goodbye to "where can I watch this?" Our intelligent playback modal instantly checks multiple massive streaming databases to find your show:
+- **Universal Platforms**: Instantly launch your title on Dulo, Redflix, Primeshows, or NetShows.
+- **Anime Specialists**: Auto-routes to AnimeSuge and HiAnime (or deep-links into the Anilab mobile app!).
+- **Backup Servers**: Seamless fallbacks to Nkiri, Net77, CineHD, and M4UHD ensuring 100% uptime for your movie nights.
+
+### 📝 Integrated Subtitle Hub
+Don't speak the language? Need closed captions? We built an entire workflow dedicated to helping you get subtitles effortlessly:
+- **Direct Repositories**: The in-app **Subtitles Tab** links you directly to the best subtitle databases on the internet (Subdl.com and Subsource.net).
+- **Format Converter Guide**: Since most web video players only accept specific file formats, we provide a warning and a direct link to convert downloaded subtitle formats (like `.ass` or `.vtt`) into the universally compatible `.srt` format!
+
 ### 🎭 Smart Movie & TV Modal
 Click any movie or show to reveal a feature-rich modal with smooth layout transitions:
-- **Streaming Options**: Direct links to **AnimeSuge / HiAnime** (for anime) or **Nkiri / Net77 / CineHD** (for movies).
-- **Strict Release Date Checks**: Protects against fake API statuses by strictly comparing calendar release dates to safely lock streaming options for unreleased media.
 - **TV & Anime Episode Tracker**: Live TVmaze integration automatically fetches global air times for the next episode and converts it to a highly-precise ticking countdown timer in your local timezone.
 - **Advanced Trailer Fetching**: Multi-language trailer support pulls official Japanese, Korean, or Chinese trailers when available. 
 - **Geoblock Fallback**: If a studio region-blocks their YouTube trailer, a smart fallback button allows you to instantly search YouTube for fan re-uploads.

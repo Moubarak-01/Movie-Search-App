@@ -8,6 +8,7 @@ import MovieCardSkeleton from './components/MovieCardSkeleton.jsx'
 import BottomNav from './components/BottomNav.jsx'
 import FilterMenu from './components/FilterMenu.jsx'
 import HeroCarousel from './components/HeroCarousel.jsx'
+import Subtitles from './components/Subtitles'
 import { useDebounce } from 'react-use'
 import { usePullToRefresh } from './hooks/usePullToRefresh.js'
 import { useFavorites } from './hooks/useFavorites.js'
@@ -409,6 +410,12 @@ const App = () => {
             >
               Favorites
             </button>
+            <button
+              onClick={() => handleTabChange('subtitles')}
+              className={`text-lg font-medium transition-colors ${activeTab === 'subtitles' ? 'text-white border-b-2 border-white' : 'text-gray-400 hover:text-white'}`}
+            >
+              Subtitles
+            </button>
           </nav>
         </header>
 
@@ -422,6 +429,8 @@ const App = () => {
             onFilterClick={() => setIsFilterOpen(true)}
           />
         </section>
+
+        {activeTab === 'subtitles' && <Subtitles />}
 
         {(() => {
           const combinedTrending = [];
@@ -563,7 +572,7 @@ const App = () => {
           </section>
         )}
 
-        {activeTab !== 'trending' && (
+        {activeTab !== 'trending' && activeTab !== 'subtitles' && (
           <section className="all-movies mt-6" id="all-movies">
           <h2>{activeTab === 'favorites' ? 'Your Favorites' : 'All Movies, Series & Animes'}</h2>
 
