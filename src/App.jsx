@@ -9,7 +9,6 @@ import BottomNav from './components/BottomNav.jsx'
 import FilterMenu from './components/FilterMenu.jsx'
 import HeroCarousel from './components/HeroCarousel.jsx'
 import Subtitles from './components/Subtitles'
-import Footer from './components/Footer'
 import { useDebounce } from 'react-use'
 import { usePullToRefresh } from './hooks/usePullToRefresh.js'
 import { useFavorites } from './hooks/useFavorites.js'
@@ -415,7 +414,7 @@ const App = () => {
               onClick={() => handleTabChange('subtitles')}
               className={`text-lg font-medium transition-colors ${activeTab === 'subtitles' ? 'text-white border-b-2 border-white' : 'text-gray-400 hover:text-white'}`}
             >
-              Subtitles
+              Resources
             </button>
           </nav>
         </header>
@@ -685,8 +684,6 @@ const App = () => {
             toggleFavorite={toggleFavorite}
           />
         )}
-        
-        <Footer />
       </div>
 
 

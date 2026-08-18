@@ -5,10 +5,10 @@ const Subtitles = () => {
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10 pb-32">
       <div className="text-center mb-12">
         <h2 className="text-3xl md:text-5xl font-bold text-white mb-4">
-          <span className="text-gradient">Subtitle Hub</span>
+          <span className="text-gradient">Resources Hub</span>
         </h2>
         <p className="text-gray-400 text-lg">
-          Everything you need to download and convert subtitles for your favorite shows.
+          Everything you need to download subtitles and find alternative streaming sources.
         </p>
       </div>
 
@@ -93,6 +93,30 @@ const Subtitles = () => {
           <p className="text-gray-300 leading-relaxed ml-16">
             Once you have your <span className="text-orange-400 font-mono">.srt</span> file, open your movie or series from our streaming buttons. In the video player, look for the <strong>CC</strong> or Subtitle icon and upload/load your converted file. Enjoy your show!
           </p>
+        </section>
+
+        {/* Step 4: Backup Streaming */}
+        <section className="bg-[#1a1a1a]/80 backdrop-blur-lg border border-pink-500/20 p-6 md:p-8 rounded-2xl shadow-xl mt-12">
+          <div className="flex items-center gap-4 mb-6">
+            <div className="w-12 h-12 rounded-full bg-pink-600/20 flex items-center justify-center border border-pink-500/30">
+              <span className="text-2xl font-bold text-pink-400">4</span>
+            </div>
+            <h3 className="text-2xl font-semibold text-white">Ultimate Streaming Directory</h3>
+          </div>
+          
+          <p className="text-gray-300 mb-6 leading-relaxed">
+            Can't find a working link in our main player? Check out the FMHY master directory for hundreds of heavily vetted, ad-free alternative streaming sites.
+          </p>
+
+          <button 
+            onClick={() => window.open('https://fmhy.net/video', '_blank')}
+            className="w-full py-4 px-6 bg-gradient-to-r from-pink-600 to-rose-600 hover:from-pink-700 hover:to-rose-700 text-white font-bold rounded-xl shadow-lg transform transition hover:scale-[1.02] flex items-center justify-center gap-3"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-6 h-6">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m13.35-.622l1.757-1.757a4.5 4.5 0 00-6.364-6.364l-4.5 4.5a4.5 4.5 0 001.242 7.244" />
+            </svg>
+            Explore FMHY Video Directory
+          </button>
         </section>
       </div>
     </div>
