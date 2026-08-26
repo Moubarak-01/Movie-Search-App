@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { Analytics } from '@vercel/analytics/react'
 import Search from './components/Search.jsx'
 import Spinner from './components/Spinner.jsx'
 import MovieCard from './components/MovieCard.jsx'
@@ -699,6 +700,7 @@ const App = () => {
         onTabChange={handleTabChange}
         onFilterClick={() => setIsFilterOpen(true)}
       />
+      <Analytics />
     </main>
   )
 }
