@@ -226,6 +226,11 @@ const MovieDetailsModal = ({ movie, onClose, isFavorite, toggleFavorite, onSelec
     window.open(`https://hianime.lol/search?keyword=${title}`, '_blank');
   };
 
+  const handleAnikoto = () => {
+    const title = encodeURIComponent(movie.title || movie.name);
+    window.open(`https://anikoto.cz/search?keyword=${title}`, '_blank');
+  };
+
   const handleNet77 = () => {
     const title = encodeURIComponent(movie.title || movie.name);
     window.open(`https://net77.cc/?s=${title}`, '_blank');
@@ -496,6 +501,12 @@ const MovieDetailsModal = ({ movie, onClose, isFavorite, toggleFavorite, onSelec
                                     className="w-full py-3 px-6 bg-gradient-to-r from-pink-600 to-rose-600 hover:from-pink-700 hover:to-rose-700 text-white font-bold rounded-lg shadow-lg transform transition hover:scale-[1.02] flex items-center justify-center gap-2"
                                   >
                                     Watch on HiAnime
+                                  </button>
+                                  <button
+                                    onClick={handleAnikoto}
+                                    className="w-full py-3 px-6 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-bold rounded-lg shadow-lg transform transition hover:scale-[1.02] flex items-center justify-center gap-2"
+                                  >
+                                    Watch on Anikoto
                                   </button>
                                   {isMobile && (
                                     <button
