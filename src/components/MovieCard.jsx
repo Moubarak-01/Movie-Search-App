@@ -2,11 +2,24 @@ import React, { useState, useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { getGenreNames } from '../utils.js';
 
+const API_BASE_URL = 'https://api.themoviedb.org/3';
+const API_OPTIONS = {
+  method: 'GET',
+  headers: {
+    accept: 'application/json',
+    Authorization: `Bearer ${import.meta.env.VITE_TMDB_API_KEY}`
+  }
+};
+
 const MovieCard = ({ movie, onClick, isFavorite, toggleFavorite, index = 0 }) => {
   const [isHovered, setIsHovered] = useState(false);
   const [isImageLoaded, setIsImageLoaded] = useState(false);
+  const [isVideoLoaded, setIsVideoLoaded] = useState(false);
+  const [trailerKey, setTrailerKey] = useState(null);
+  const [isMuted, setIsMuted] = useState(true);
   const hoverTimeoutRef = useRef(null);
   const cardRef = useRef(null);
+  const iframeRef = useRef(null);
   const [hoverStyle, setHoverStyle] = useState({ transformOrigin: 'center center', left: '-10%', top: '-10%' });
 
   const updateHoverPosition = () => {
@@ -45,22 +58,70 @@ const MovieCard = ({ movie, onClick, isFavorite, toggleFavorite, index = 0 }) =>
       hoverTimeoutRef.current = setTimeout(() => {
         updateHoverPosition();
         setIsHovered(true);
-      }, 1300); // delay
+      }, 400); // reduced delay for snappier trailers
     }
   };
 
   useEffect(() => {
     if (isHovered) {
       window.addEventListener('scroll', updateHoverPosition, { passive: true });
+      
+      let isMounted = true;
+      const fetchTrailer = async () => {
+        try {
+          const type = movie.title ? 'movie' : 'tv';
+          const response = await fetch(`${API_BASE_URL}/${type}/${movie.id}/videos?api_key=${import.meta.env.VITE_TMDB_API_KEY}&language=en-US`, API_OPTIONS);
+          const data = await response.json();
+          
+          if (isMounted && data.results && data.results.length > 0) {
+            const trailer = data.results.find(vid => vid.site === 'YouTube' && (vid.type === 'Trailer' || vid.type === 'Teaser'));
+            if (trailer) {
+              setTrailerKey(trailer.key);
+            }
+          }
+        } catch (error) {
+          console.error("Error fetching hover trailer:", error);
+        }
+      };
+      
+      fetchTrailer();
+
       return () => {
+        isMounted = false;
         window.removeEventListener('scroll', updateHoverPosition);
       };
+    } else {
+      setTrailerKey(null);
+      setIsVideoLoaded(false);
     }
   }, [isHovered]);
+
+  useEffect(() => {
+    if (trailerKey) {
+      // Delay fade-in by 2.5s to completely hide the initial flash of YouTube/Safari native media controls
+      const timer = setTimeout(() => setIsVideoLoaded(true), 2500);
+      return () => clearTimeout(timer);
+    } else {
+      setIsVideoLoaded(false);
+    }
+  }, [trailerKey]);
 
   const handleMouseLeave = () => {
     if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current);
     setIsHovered(false);
+    setIsMuted(true); // reset mute state
+  };
+
+  const toggleMute = (e) => {
+    e.stopPropagation();
+    if (iframeRef.current && iframeRef.current.contentWindow) {
+      const command = isMuted ? 'unMute' : 'mute';
+      iframeRef.current.contentWindow.postMessage(
+        JSON.stringify({ event: 'command', func: command, args: [] }),
+        '*'
+      );
+      setIsMuted(!isMuted);
+    }
   };
 
   useEffect(() => {
@@ -159,15 +220,54 @@ const MovieCard = ({ movie, onClick, isFavorite, toggleFavorite, index = 0 }) =>
           }}
           onClick={(e) => e.stopPropagation()} // Prevent card click when interacting with hover card
         >
-          {/* Backdrop Image */}
+          {/* Backdrop Image & Video */}
           <div className="relative w-full aspect-video bg-black cursor-pointer rounded-t-lg overflow-hidden" onClick={() => onClick(movie)}>
+            {/* 1. Video Layer (Bottom) - Always opaque so browser doesn't throttle autoplay */}
+            {trailerKey && (
+              <>
+                <div className="absolute inset-0 z-0 overflow-hidden rounded-t-lg">
+                  <iframe
+                    ref={iframeRef}
+                    src={`https://www.youtube.com/embed/${trailerKey}?autoplay=1&mute=1&controls=0&disablekb=1&loop=1&playlist=${trailerKey}&fs=0&modestbranding=1&playsinline=1&rel=0&start=12&enablejsapi=1`}
+                    title="Trailer preview"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    className="absolute top-1/2 left-1/2 w-[160%] h-[160%] -translate-x-1/2 -translate-y-1/2 pointer-events-none"
+                    tabIndex="-1"
+                  ></iframe>
+                </div>
+                {/* Invisible shield to completely block all cursor interactions with YouTube */}
+                <div className="absolute inset-0 z-[5] w-full h-full bg-transparent cursor-pointer"></div>
+              </>
+            )}
+
+            {/* 2. Static Image Layer (Top) - Covers the video while it buffers and while controls flash, then fades out */}
             <img
               src={movie.backdrop_path ? `https://image.tmdb.org/t/p/w500/${movie.backdrop_path}` : (movie.poster_path ? `https://image.tmdb.org/t/p/w500/${movie.poster_path}` : '/no-movie.png')}
               alt={title}
-              className="w-full h-full object-cover"
+              className={`absolute inset-0 w-full h-full object-cover z-10 transition-opacity duration-700 pointer-events-none ${trailerKey && isVideoLoaded ? 'opacity-0' : 'opacity-100'}`}
             />
-            <div className="absolute bottom-0 left-0 right-0 h-2/3 bg-gradient-to-t from-[#141414] to-transparent pointer-events-none"></div>
-            <h3 className="absolute bottom-3 left-4 text-white font-bold text-lg drop-shadow-md line-clamp-2 max-w-[90%]">{title}</h3>
+            
+            <div className="absolute bottom-0 left-0 right-0 h-2/3 bg-gradient-to-t from-[#141414] to-transparent pointer-events-none z-20"></div>
+            <h3 className="absolute bottom-3 left-4 pr-12 text-white font-bold text-lg drop-shadow-md line-clamp-2 max-w-[90%] z-30">{title}</h3>
+            
+            {/* Custom Mute Toggle Button */}
+            {trailerKey && isVideoLoaded && (
+              <button 
+                onClick={toggleMute}
+                className="absolute bottom-3 right-3 z-50 p-1.5 bg-black/40 hover:bg-black/60 rounded-full border border-white/20 text-white transition-colors"
+              >
+                {isMuted ? (
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
+                    <path d="M13.5 4.06c0-1.336-1.616-2.005-2.56-1.06l-4.5 4.5H4.508c-1.141 0-2.318.664-2.66 1.905A9.76 9.76 0 0 0 1.5 12c0 .898.121 1.768.35 2.595.341 1.24 1.518 1.905 2.659 1.905h1.93l4.5 4.5c.945.945 2.561.276 2.561-1.06V4.06ZM17.78 9.22a.75.75 0 1 0-1.06 1.06L18.44 12l-1.72 1.72a.75.75 0 1 0 1.06 1.06l1.72-1.72 1.72 1.72a.75.75 0 1 0 1.06-1.06L20.56 12l1.72-1.72a.75.75 0 1 0-1.06-1.06l-1.72 1.72-1.72-1.72Z" />
+                  </svg>
+                ) : (
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
+                    <path d="M13.5 4.06c0-1.336-1.616-2.005-2.56-1.06l-4.5 4.5H4.508c-1.141 0-2.318.664-2.66 1.905A9.76 9.76 0 0 0 1.5 12c0 .898.121 1.768.35 2.595.341 1.24 1.518 1.905 2.659 1.905h1.93l4.5 4.5c.945.945 2.561.276 2.561-1.06V4.06ZM18.584 5.106a.75.75 0 0 1 1.06 0c3.808 3.807 3.808 9.98 0 13.788a.75.75 0 0 1-1.06-1.06 8.25 8.25 0 0 0 0-11.668.75.75 0 0 1 0-1.06Z" />
+                    <path d="M15.932 7.757a.75.75 0 0 1 1.061 0 4.5 4.5 0 0 1 0 6.364.75.75 0 0 1-1.06-1.06 3 3 0 0 0 0-4.243.75.75 0 0 1 0-1.061Z" />
+                  </svg>
+                )}
+              </button>
+            )}
           </div>
 
           {/* Details Section */}
