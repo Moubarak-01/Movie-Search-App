@@ -70,8 +70,8 @@ Mouvie solves a common problem: finding where to watch your favorite movies and 
 
 ### 🍿 Universal Streaming Integration
 Say goodbye to "where can I watch this?" Our intelligent playback modal instantly checks multiple massive streaming databases to find your show:
-- **Universal Platforms**: Instantly launch your title on Dulo, Redflix, Primeshows, or NetShows.
-- **Anime Specialists**: Auto-routes to AnimeSuge, HiAnime, and Anikoto (or deep-links into the Anilab mobile app!).
+- **Universal Platforms**: Instantly launch your title on Dulo, Redflix, Primeshows, NetShows, or StigStream.
+- **Anime Specialists**: Auto-routes to AnimeSuge, HiAnime, and Anikoto.
 - **Backup Servers**: Seamless fallbacks to Nkiri, Net77, CineHD, and M4UHD ensuring 100% uptime for your movie nights.
 
 ### 📝 Integrated Subtitle Hub
@@ -176,4 +176,4 @@ Distributed under the MIT License. See `LICENSE` for more information.
 
 - **TMDB API** for the incredible movie/anime/series database.
 - **Appwrite** for the seamless backend integration.
-- **Dulo, Redflix, Primeshows, NetShows, AnimeSuge, HiAnime, Anikoto, Net77, CineHD, M4UHD & Nkiri** for streaming capabilities.
+- **Dulo, Redflix, Primeshows, NetShows, StigStream, AnimeSuge, HiAnime, Anikoto, Net77, CineHD, M4UHD & Nkiri** for streaming capabilities.

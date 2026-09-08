@@ -201,26 +201,6 @@ const MovieDetailsModal = ({ movie, onClose, isFavorite, toggleFavorite, onSelec
     window.open(`https://animesuge.cz/filter?keyword=${title}`, '_blank');
   };
 
-  const handleAnilab = () => {
-    if (isAndroid) {
-      const package_name = "com.anilab.android";
-      const fallback_url = "https://anilab.to/";
-      const intentUrl = `intent:#Intent;action=android.intent.action.MAIN;category=android.intent.category.LAUNCHER;package=${package_name};S.browser_fallback_url=${fallback_url};end`;
-      window.location.href = intentUrl;
-    } else if (isIOS) {
-      const appDeepLink = `anilab://`;
-      const appDownloadUrl = `https://anilab.to/`;
-      window.location.href = appDeepLink;
-      setTimeout(() => {
-        if (!document.hidden) {
-          if (confirm("Anilab App not found. Open download page?")) {
-            window.location.href = appDownloadUrl;
-          }
-        }
-      }, 2000);
-    }
-  };
-
   const handleHiAnime = () => {
     const title = encodeURIComponent(movie.title || movie.name);
     window.open(`https://hianime.lol/search?keyword=${title}`, '_blank');
@@ -261,9 +241,14 @@ const MovieDetailsModal = ({ movie, onClose, isFavorite, toggleFavorite, onSelec
     window.open(`https://primeshows.org/?s=${title}`, '_blank');
   };
 
-  const handleNetshows = () => {
+  const handleNetShows = () => {
     const title = encodeURIComponent(movie.title || movie.name);
     window.open(`https://netshows.xyz/search?q=${title}`, '_blank');
+  };
+
+  const handleStigStream = () => {
+    const title = encodeURIComponent(movie.title || movie.name);
+    window.open(`https://stigstream.ru/?s=${title}`, '_blank');
   };
 
   const primaryButtonText = "Watch on Nkiri";
@@ -508,14 +493,6 @@ const MovieDetailsModal = ({ movie, onClose, isFavorite, toggleFavorite, onSelec
                                   >
                                     Watch on Anikoto
                                   </button>
-                                  {isMobile && (
-                                    <button
-                                      onClick={handleAnilab}
-                                      className="w-full py-3 px-6 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-bold rounded-lg shadow-lg transform transition hover:scale-[1.02] flex items-center justify-center gap-2"
-                                    >
-                                      Open Anilab App
-                                    </button>
-                                  )}
                                 </>
                               )}
 
@@ -541,10 +518,17 @@ const MovieDetailsModal = ({ movie, onClose, isFavorite, toggleFavorite, onSelec
                               </button>
 
                               <button
-                                onClick={handleNetshows}
+                                onClick={handleNetShows}
                                 className="w-full py-3 px-6 bg-gradient-to-r from-fuchsia-600 to-pink-700 hover:from-fuchsia-700 hover:to-pink-800 text-white font-bold rounded-lg shadow-lg transform transition hover:scale-[1.02] flex items-center justify-center gap-2"
                               >
                                 Watch on NetShows
+                              </button>
+
+                              <button
+                                onClick={handleStigStream}
+                                className="w-full py-3 px-6 bg-gradient-to-r from-indigo-600 to-cyan-700 hover:from-indigo-700 hover:to-cyan-800 text-white font-bold rounded-lg shadow-lg transform transition hover:scale-[1.02] flex items-center justify-center gap-2"
+                              >
+                                Watch on StigStream
                               </button>
 
                               <button
