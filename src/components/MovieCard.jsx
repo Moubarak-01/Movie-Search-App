@@ -98,8 +98,8 @@ const MovieCard = ({ movie, onClick, isFavorite, toggleFavorite, index = 0 }) =>
 
   useEffect(() => {
     if (trailerKey) {
-      // Delay fade-in by 2.5s to completely hide the initial flash of YouTube/Safari native media controls
-      const timer = setTimeout(() => setIsVideoLoaded(true), 2500);
+      // 7-second delay from hover to guarantee YouTube UI is fully faded
+      const timer = setTimeout(() => setIsVideoLoaded(true), 7000);
       return () => clearTimeout(timer);
     } else {
       setIsVideoLoaded(false);
@@ -226,14 +226,14 @@ const MovieCard = ({ movie, onClick, isFavorite, toggleFavorite, index = 0 }) =>
             {trailerKey && (
               <>
                 <div className="absolute inset-0 z-0 overflow-hidden rounded-t-lg">
-                  <iframe
-                    ref={iframeRef}
-                    src={`https://www.youtube.com/embed/${trailerKey}?autoplay=1&mute=1&controls=0&disablekb=1&loop=1&playlist=${trailerKey}&fs=0&modestbranding=1&playsinline=1&rel=0&start=12&enablejsapi=1`}
-                    title="Trailer preview"
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                    className="absolute top-1/2 left-1/2 w-[160%] h-[160%] -translate-x-1/2 -translate-y-1/2 pointer-events-none"
-                    tabIndex="-1"
-                  ></iframe>
+                    <iframe
+                      ref={iframeRef}
+                      src={`https://www.youtube.com/embed/${trailerKey}?autoplay=1&mute=1&controls=0&disablekb=1&loop=1&playlist=${trailerKey}&fs=0&modestbranding=1&playsinline=1&rel=0&start=12&enablejsapi=1`}
+                      title="Trailer preview"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      className="absolute top-1/2 left-1/2 w-[125%] h-[125%] -translate-x-1/2 -translate-y-1/2 pointer-events-none"
+                      tabIndex="-1"
+                    ></iframe>
                 </div>
                 {/* Invisible shield to completely block all cursor interactions with YouTube */}
                 <div className="absolute inset-0 z-[5] w-full h-full bg-transparent cursor-pointer"></div>
