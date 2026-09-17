@@ -253,7 +253,7 @@ const MovieDetailsModal = ({ movie, onClose, isFavorite, toggleFavorite, onSelec
 
   const handleCinejoy = () => {
     const title = encodeURIComponent(movie.title || movie.name);
-    window.open(`https://cinejoy.to/search/${title}`, '_blank');
+    window.open(`https://cinejoy.pk/search/${title}`, '_blank');
   };
 
   const primaryButtonText = "Watch on Nkiri";
